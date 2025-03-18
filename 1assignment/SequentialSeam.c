@@ -63,40 +63,55 @@ int main(int argc, char *argv[])
         // calculate energy
         for(int i = 0;i < height;i++){
             for(int j = 0;j < width;j++){
-                double dx = 0;
-                double dy = 0;
+                double Gx = -image_out[(i - 1) * width * cpp + (j - 1) * cpp]
+                        - 2 * image_out[i * width * cpp + (j - 1) * cpp]
+                        - image_out[(i + 1) * width * cpp + (j - 1) * cpp]
+                        + image_out[(i - 1) * width * cpp + (j + 1) * cpp]
+                        + 2 * image_out[i * width * cpp + (j + 1) * cpp]
+                        + image_out[(i + 1) * width * cpp + (j + 1) * cpp];
 
-                // calculate dx
-                
-
-                double energy = sqrt(dx*dx + dy*dy);
-                image_out[i*width*cpp + j*cpp] = energy;
+                double Gy = image_out[(i - 1) * width * cpp + (j - 1) * cpp] 
+                        + 2 * image_out[(i - 1) * width * cpp + j * cpp] 
+                        + image_out[(i - 1) * width * cpp + (j + 1) * cpp]
+                        - image_out[(i + 1) * width * cpp + (j - 1) * cpp] 
+                        - 2 * image_out[(i + 1) * width * cpp + j * cpp] 
+                        - image_out[(i + 1) * width * cpp + (j + 1) * cpp];
+    
+                double energy = sqrt(Gx * Gx + Gy * Gy);
+                image_out[i * width * cpp + j * cpp] = (unsigned char)energy;
             }
         }
 
         // remember path
-        int *path = (int *)malloc(sizeof(int)*height);
+        int *path = (int *)malloc(sizeof(int) * height);
 
         // calculate path cost
         int cost = INT_MAX;
         int col = 0;
-        for(int i = 0;i < width;i++){
-            if(image_out[(height-1)*width*cpp + i*cpp] < cost){
-                cost = image_out[(height-1)*width*cpp + i*cpp];
+        for (int i = 0; i < width; i++)
+        {
+            if (image_out[(height - 1) * width * cpp + i * cpp] < cost)
+            {
+                cost = image_out[(height - 1) * width * cpp + i * cpp];
                 col = i;
             }
         }
 
+
         path[0] = col;
-        for(int i = 1;i < height;i++){
+        for (int i = 1; i < height; i++)
+        {
             int min = INT_MAX;
             int min_col = 0;
             // look at neighbours
-            for(int j = -1;j < 2;j++){
-                if(col+j >= 0 && col+j < width){
-                    if(image_out[(height-i)*width*cpp + (col+j)*cpp] < min){
-                        min = image_out[(height-i)*width*cpp + (col+j)*cpp];
-                        min_col = col+j;
+            for (int j = -1; j < 2; j++)
+            {
+                if (col + j >= 0 && col + j < width)
+                {
+                    if (image_out[(height - i) * width * cpp + (col + j) * cpp] < min)
+                    {
+                        min = image_out[(height - i) * width * cpp + (col + j) * cpp];
+                        min_col = col + j;
                     }
                 }
             }
@@ -111,7 +126,21 @@ int main(int argc, char *argv[])
         // hillary clinton is a lizard
         //
 
+        // remove the cheapest path
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = path[i]; j < width - 1; j++)
+            {
+                for (int c = 0; c < cpp; c++)
+                {
+                    image_out[i * width * cpp + j * cpp + c] = image_out[i * width * cpp + (j + 1) * cpp + c];
+                }
+            }
+        }
+        width--;
+
         // remove the path
+        free(path);
         
 
     }

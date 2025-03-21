@@ -126,27 +126,35 @@ int main(int argc, char *argv[]) {
     free(energy_image);
 
     printf("Energy image saved as energy.png\n");
-
+    // TODO: dynamic allocation
+    int seam[height];
     // Vertical seam identification
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
-    for(int num_of_seams = 0;num_of_seams < 2;num_of_seams++){
+    for(int num_of_seams = 0;num_of_seams < 1;num_of_seams++){
+
+        unsigned char *energy_copy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
+        memcpy(energy_copy, energy, width * height * sizeof(unsigned char));
+
         // start at the bottom
-        for(int i = height - 2;i >= 0;i--){
-            for(int j = 0;j < width;j++){
-                // Out of bounds conditions
-                int j_minus_1 = (j - 1 < 0) ? 0 : j - 1;
-                int j_plus_1 = (j + 1 >= width) ? width - 1 : j + 1;
-
-                // Minimum energy for neighboring pixels
-                int min_energy = energy[i * width + j] + fmin(fmin(energy[(i + 1) * width + j_minus_1], energy[(i + 1) * width + j]), energy[(i + 1) * width + j_plus_1]);
-
-                energy[i * width + j] = min_energy;
+        for (int i = height - 2; i >= 0; i--) {
+            for (int j = 0; j < width; j++) {
+                int j_minus_1 = (j - 1 < 0) ? j : j - 1;
+                int j_plus_1 = (j + 1 >= width) ? j : j + 1;
+        
+                int below_left = energy_copy[(i + 1) * width + j_minus_1];
+                int below = energy_copy[(i + 1) * width + j];
+                int below_right = energy_copy[(i + 1) * width + j_plus_1];
+        
+                energy_copy[i * width + j] += fmin(fmin(below_left, below), below_right);
             }
-        }
+        }        
+
+        // replace energy with energy copy
+        memcpy(energy, energy_copy, width * height * sizeof(unsigned char));
 
         // Save location of pixels with lowest path
-        int seam[height];
+        // int seam[height];
 
         // Vertical seam removal
         // Find lowest value in top row
@@ -157,11 +165,11 @@ int main(int argc, char *argv[]) {
                 min_energy = energy[i];
                 min_position = i;
             }
-            seam[0] = min_position;
         }
+        seam[0] = min_position;
 
         // Iteratively select the lowest energy path
-        for(int i = 0;i < height-1;i++){
+        for(int i = 1;i < height;i++){
             int next_position = min_position;
             int next_energy = INT_MAX;
             for(int j = -1;j < 2;j++){
@@ -173,7 +181,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-            seam[i + 1] = next_position;
+            seam[i] = next_position;
             min_position = next_position;
         }
 
@@ -188,7 +196,30 @@ int main(int argc, char *argv[]) {
         }
         // Update image width after seam removal
         width -= 1;
+        free(energy_copy);
     }
+
+    // Save the final image
+    unsigned char *new_image = (unsigned char *)malloc(width * height * cpp);
+
+    for (int i = 0; i < height; i++) {
+        int seam_col = seam[i];
+        int dst_col = 0;
+        for (int j = 0; j < width + 1; j++) {  // original width before decrement
+            if (j == seam_col) continue;  // skip the seam pixel
+
+            for (int c = 0; c < cpp; c++) {
+                new_image[(i * width + dst_col) * cpp + c] =
+                    image_out[(i * (width + 1) + j) * cpp + c];
+            }
+            dst_col++;
+        }
+    }
+
+    // Replace old image
+    free(image_out);
+    image_out = new_image;
+
 
     // Update final image size and save the result
     stbi_write_png(image_out_name, width, height, cpp, image_out, width * cpp);

@@ -127,8 +127,73 @@ int main(int argc, char *argv[]) {
 
     printf("Energy image saved as energy.png\n");
 
+    // Vertical seam identification
+    // seam - path from top to bottom with lowest Energy
+    // solve with dynamic programming
+    for(int num_of_seams = 0;num_of_seams < 2;num_of_seams++){
+        // start at the bottom
+        for(int i = height - 2;i >= 0;i--){
+            for(int j = 0;j < width;j++){
+                // Out of bounds conditions
+                int j_minus_1 = (j - 1 < 0) ? 0 : j - 1;
+                int j_plus_1 = (j + 1 >= width) ? width - 1 : j + 1;
+
+                // Minimum energy for neighboring pixels
+                int min_energy = energy[i * width + j] + fmin(fmin(energy[(i + 1) * width + j_minus_1], energy[(i + 1) * width + j]), energy[(i + 1) * width + j_plus_1]);
+
+                energy[i * width + j] = min_energy;
+            }
+        }
+
+        // Save location of pixels with lowest path
+        int seam[height];
+
+        // Vertical seam removal
+        // Find lowest value in top row
+        int min_position = 0;
+        int min_energy = INT_MAX;
+        for(int i = 0;i < width;i++){
+            if(energy[i] < min_energy){
+                min_energy = energy[i];
+                min_position = i;
+            }
+            seam[0] = min_position;
+        }
+
+        // Iteratively select the lowest energy path
+        for(int i = 0;i < height-1;i++){
+            int next_position = min_position;
+            int next_energy = INT_MAX;
+            for(int j = -1;j < 2;j++){
+                // bounds check
+                if(min_position + j >= 0 && min_position + j < width){
+                    if(energy[(i + 1) * width + min_position + j] < next_energy){
+                        next_energy = energy[(i + 1) * width + min_position + j];
+                        next_position = min_position + j;
+                    }
+                }
+            }
+            seam[i + 1] = next_position;
+            min_position = next_position;
+        }
+
+        // Remove the vertical seam from the image
+        for(int i = 0;i < height;i++){
+            int seam_col = seam[i]; // Column to remove
+            for(int j = seam_col;j < width - 1;j++){
+                for(int c = 0;c < cpp;c++){
+                    image_out[(i * width + j) * cpp + c] = image_out[(i * width + j + 1) * cpp + c];
+                }
+            }
+        }
+        // Update image width after seam removal
+        width -= 1;
+    }
+
     // Update final image size and save the result
     stbi_write_png(image_out_name, width, height, cpp, image_out, width * cpp);
+
+    printf("Saved image as %s", image_out_name);
 
 
     stbi_image_free(image_in);

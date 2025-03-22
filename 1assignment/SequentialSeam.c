@@ -20,6 +20,30 @@ void copy_image(unsigned char *image_out, const unsigned char *image_in, size_t 
     }
 }
 
+// Grayscale enery image
+// Normalize energy values to 0-255 range
+unsigned char* calc_energy_image(unsigned char* energy_image, unsigned char* energy, int width, int height) {
+    double max_energy = 0.0;
+
+    // Find the maximum energy value for normalization
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (energy[i * width + j] > max_energy) {
+                max_energy = energy[i * width + j];
+            }
+        }
+    }
+
+    // Scale energy values to fit in 0-255
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            energy_image[i * width + j] = (unsigned char)((energy[i * width + j] / max_energy) * 255);
+        }
+    }
+
+    return energy_image;
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc < 3) {
@@ -108,23 +132,7 @@ int main(int argc, char *argv[]) {
     // Grayscale enery image
     // Normalize energy values to 0-255 range
     unsigned char *energy_image = (unsigned char *)malloc(width * height * sizeof(unsigned char));
-    double max_energy = 0.0;
-
-    // Find the maximum energy value for normalization
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            if (energy[i * width + j] > max_energy) {
-                max_energy = energy[i * width + j];
-            }
-        }
-    }
-
-    // Scale energy values to fit in 0-255
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            energy_image[i * width + j] = (unsigned char)((energy[i * width + j] / max_energy) * 255);
-        }
-    }
+    calc_energy_image(energy_image, energy, width, height);
 
     // Save the energy image as a grayscale PNG
     stbi_write_png("energy.png", width, height, 1, energy_image, width);

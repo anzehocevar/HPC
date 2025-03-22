@@ -182,6 +182,13 @@ int main(int argc, char *argv[]) {
     // Save location of pixels with lowest path
     int* seam = (int*) malloc(height * sizeof(int));
 
+    // Variables for total time
+    double t_start = omp_get_wtime();
+    double t_energy = 0.0;
+    double t_identification = 0.0;
+    double t_removal = 0.0;
+    double t_copy = 0.0;
+
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
     for(int iter = 0;iter < num_of_seams;iter++){
@@ -195,13 +202,13 @@ int main(int argc, char *argv[]) {
         }
 
         // measure time
-        double start = omp_get_wtime();
+        double t_energy_start = omp_get_wtime();
 
         // Energy Calculation
         calc_energy(image, energy, width, height, cpp);
 
-        double energy_end = omp_get_wtime();
-        printf("Energy calculation took %f seconds\n", energy_end - start);
+        double t_energy_end = omp_get_wtime();
+        t_energy += t_energy_end - t_energy_start;
 
         if (DEBUG_MODE && iter == 0) {
             // Grayscale energy image
@@ -218,8 +225,7 @@ int main(int argc, char *argv[]) {
             printf("Energy image saved as energy.png\n");
         }
 
-        // measure seam carving time
-        double seam_start = omp_get_wtime();
+        double t_identification_start = omp_get_wtime();
 
         // Vertical seam identification
         // start at the bottom
@@ -236,13 +242,26 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        double t_identification_end = omp_get_wtime();
+        t_identification += t_identification_end - t_identification_start;
+
+        double t_removal_start = omp_get_wtime();
+
         // Vertical seam removal
         // Fill array seam with column indexes of path
         find_vertical_seam(seam, energy, width, height);
 
+        double t_removal_end = omp_get_wtime();
+        t_removal += t_removal_end - t_removal_start;
+
+        double t_copy_start = omp_get_wtime();
+
         // Create new image by skipping seam pixels in current image
         unsigned char *image_narrower = (unsigned char *)malloc((width-1) * height * cpp);
         calc_image_narrower(image_narrower, image, seam, width, height, cpp);
+
+        double t_copy_end = omp_get_wtime();
+        t_copy += t_copy_end - t_copy_start;
 
         // Replace old image
         free(image);
@@ -251,9 +270,6 @@ int main(int argc, char *argv[]) {
         // Update image width after seam removal
         width -= 1;
     }
-
-    double seam_end = omp_get_wtime();
-    // printf("Seam carving took %f seconds\n", seam_end - seam_start);
 
     // Update final image size and save the result
     stbi_write_png(image_out_name, width, height, cpp, image, width * cpp);
@@ -264,7 +280,12 @@ int main(int argc, char *argv[]) {
     free(image);
     free(seam);
 
+    double t_end = omp_get_wtime();
     printf("Finished seam carving.\n");
-    // printf("Total time: %f seconds\n", seam_end - start);
+    printf("Energy calculation took %.3f seconds\n", t_energy);
+    printf("Vertical seam identification took %.3f seconds\n", t_identification);
+    printf("Seam removal took %.3f seconds\n", t_removal);
+    printf("Copying took %.3f seconds\n", t_copy);
+    printf("Total time: %.3f seconds\n", t_end - t_start);
     return 0;
 }

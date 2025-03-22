@@ -179,6 +179,11 @@ int main(int argc, char *argv[]) {
     // Copy the image
     copy_image(image, image_in, datasize);
 
+
+    // Save location of pixels with lowest path
+    // TODO: dynamic allocation
+    int seam[height];
+
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
     for(int iter = 0;iter < num_of_seams;iter++){
@@ -232,10 +237,6 @@ int main(int argc, char *argv[]) {
                 energy[i * width + j] += fmin(fmin(below_left, below), below_right);
             }
         }
-
-        // Save location of pixels with lowest path
-        // TODO: dynamic allocation
-        int seam[height];
 
         // Vertical seam removal
         // Fill array seam with column indexes of path

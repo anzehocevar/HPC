@@ -8,6 +8,7 @@
 #SBATCH --nodelist=wn141
 #SBATCH --threads-per-core=1
 #SBATCH --exclusive
+#SBATCH --time=04:00:00
 
 export OMP_PLACES=cores
 export OMP_PROC_BIND=TRUE

@@ -271,17 +271,18 @@ int main(int argc, char *argv[]) {
         width -= 1;
     }
 
+    printf("Finished seam carving.\n");
+
     // Update final image size and save the result
     stbi_write_png(image_out_name, width, height, cpp, image, width * cpp);
-
     printf("Saved image as %s\n", image_out_name);
 
+    // Free allocated variables
     stbi_image_free(image_in);
     free(image);
     free(seam);
 
     double t_end = omp_get_wtime();
-    printf("Finished seam carving.\n");
     printf("Energy calculation took %.3f seconds\n", t_energy);
     printf("Vertical seam identification took %.3f seconds\n", t_identification);
     printf("Seam removal took %.3f seconds\n", t_removal);

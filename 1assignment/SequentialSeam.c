@@ -44,6 +44,45 @@ unsigned char* calc_energy_image(unsigned char* energy_image, unsigned char* ene
     return energy_image;
 }
 
+void calc_energy(unsigned char* input, unsigned char* energy, int width, int height, int cpp) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            double Gx[3] = {0.0, 0.0, 0.0};
+            double Gy[3] = {0.0, 0.0, 0.0};
+
+            for (int c = 0; c < cpp; c++) {
+                // Handle out of bounds conditions
+                int i_minus_1 = (i - 1 < 0) ? 0 : i - 1;
+                int i_plus_1 = (i + 1 >= height) ? height - 1 : i + 1;
+                int j_minus_1 = (j - 1 < 0) ? 0 : j - 1;
+                int j_plus_1 = (j + 1 >= width) ? width - 1 : j + 1;
+    
+                // Sobel operator 
+                Gx[c] = -input[i_minus_1 * width * cpp + j_minus_1 * cpp + c]
+                        - 2 * input[i * width * cpp + j_minus_1 * cpp + c]
+                        - input[i_plus_1 * width * cpp + j_minus_1 * cpp + c]
+                        + input[i_minus_1 * width * cpp + j_plus_1 * cpp + c]
+                        + 2 * input[i * width * cpp + j_plus_1 * cpp + c]
+                        + input[i_plus_1 * width * cpp + j_plus_1 * cpp + c];
+    
+                Gy[c] = input[i_minus_1 * width * cpp + j_minus_1 * cpp + c]
+                        + 2 * input[i_minus_1 * width * cpp + j * cpp + c]
+                        + input[i_minus_1 * width * cpp + j_plus_1 * cpp + c]
+                        - input[i_plus_1 * width * cpp + j_minus_1 * cpp + c]
+                        - 2 * input[i_plus_1 * width * cpp + j * cpp + c]
+                        - input[i_plus_1 * width * cpp + j_plus_1 * cpp + c];
+            }
+
+            double energy_val = (sqrt(Gx[0] * Gx[0] + Gy[0] * Gy[0]) +
+                                 sqrt(Gx[1] * Gx[1] + Gy[1] * Gy[1]) +
+                                 sqrt(Gx[2] * Gx[2] + Gy[2] * Gy[2])) / 3.0;
+            
+            energy[i * width + j] = (unsigned char)energy_val;
+        }
+    }
+
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc < 3) {
@@ -90,41 +129,7 @@ int main(int argc, char *argv[]) {
 
 
     // Energy Calculation
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            double Gx[3] = {0.0, 0.0, 0.0};
-            double Gy[3] = {0.0, 0.0, 0.0};
-
-            for (int c = 0; c < cpp; c++) {
-                // Handle out of bounds conditions
-                int i_minus_1 = (i - 1 < 0) ? 0 : i - 1;
-                int i_plus_1 = (i + 1 >= height) ? height - 1 : i + 1;
-                int j_minus_1 = (j - 1 < 0) ? 0 : j - 1;
-                int j_plus_1 = (j + 1 >= width) ? width - 1 : j + 1;
-    
-                // Sobel operator 
-                Gx[c] = -image_out[i_minus_1 * width * cpp + j_minus_1 * cpp + c]
-                        - 2 * image_out[i * width * cpp + j_minus_1 * cpp + c]
-                        - image_out[i_plus_1 * width * cpp + j_minus_1 * cpp + c]
-                        + image_out[i_minus_1 * width * cpp + j_plus_1 * cpp + c]
-                        + 2 * image_out[i * width * cpp + j_plus_1 * cpp + c]
-                        + image_out[i_plus_1 * width * cpp + j_plus_1 * cpp + c];
-    
-                Gy[c] = image_out[i_minus_1 * width * cpp + j_minus_1 * cpp + c]
-                        + 2 * image_out[i_minus_1 * width * cpp + j * cpp + c]
-                        + image_out[i_minus_1 * width * cpp + j_plus_1 * cpp + c]
-                        - image_out[i_plus_1 * width * cpp + j_minus_1 * cpp + c]
-                        - 2 * image_out[i_plus_1 * width * cpp + j * cpp + c]
-                        - image_out[i_plus_1 * width * cpp + j_plus_1 * cpp + c];
-            }
-
-            double energy_val = (sqrt(Gx[0] * Gx[0] + Gy[0] * Gy[0]) +
-                                 sqrt(Gx[1] * Gx[1] + Gy[1] * Gy[1]) +
-                                 sqrt(Gx[2] * Gx[2] + Gy[2] * Gy[2])) / 3.0;
-            
-            energy[i * width + j] = (unsigned char)energy_val;
-        }
-    }
+    calc_energy(image_out, energy, width, height, cpp);
 
     double energy_end = omp_get_wtime();
     printf("Energy calculation took %f seconds\n", energy_end - start);

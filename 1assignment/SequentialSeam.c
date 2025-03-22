@@ -179,10 +179,8 @@ int main(int argc, char *argv[]) {
     // Copy the image
     copy_image(image, image_in, datasize);
 
-
     // Save location of pixels with lowest path
-    // TODO: dynamic allocation
-    int seam[height];
+    int* seam = (int*) malloc(height * sizeof(int));
 
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
@@ -264,6 +262,7 @@ int main(int argc, char *argv[]) {
 
     stbi_image_free(image_in);
     free(image);
+    free(seam);
 
     printf("Finished seam carving.\n");
     // printf("Total time: %f seconds\n", seam_end - start);

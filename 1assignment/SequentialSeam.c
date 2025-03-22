@@ -151,6 +151,13 @@ int main(int argc, char *argv[]) {
         num_of_seams = (int) strtol(argv[3], NULL, 10);
     printf("Number of seams: %d\n", num_of_seams);
 
+    // Determine number of threads to run
+    int num_of_threads = 0;
+    if (argc > 4) {
+        num_of_threads = (int) strtol(argv[4], NULL, 10);
+        omp_set_num_threads(num_of_threads);
+    }
+
     // Read image
     int width, height, cpp;
     unsigned char *image_in = stbi_load(image_in_name, &width, &height, &cpp, COLOR_CHANNELS);

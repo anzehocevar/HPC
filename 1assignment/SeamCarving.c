@@ -118,6 +118,7 @@ void calc_energy(unsigned char* input, unsigned char* energy, int width, int hei
 
 void calc_image_narrower(unsigned char* image_narrower, unsigned char* image, int* seam, int width, int height, int cpp) {
     int width_minus_1 = width - 1;  // To make it abundantly clear
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < height; i++) {
         int seam_col = seam[i];
         int dst_col = 0;

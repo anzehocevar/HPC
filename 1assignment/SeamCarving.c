@@ -77,6 +77,7 @@ unsigned char* calc_energy_image(unsigned char* energy_image, unsigned char* ene
 }
 
 void calc_energy(unsigned char* input, unsigned char* energy, int width, int height, int cpp) {
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             double Gx[3] = {0.0, 0.0, 0.0};
@@ -240,6 +241,7 @@ int main(int argc, char *argv[]) {
         // Vertical seam identification
         // start at the bottom
         for (int i = height - 2; i >= 0; i--) {
+            #pragma omp parallel for schedule(static)   // static -> assign continuous blocks of memory to individual threads
             for (int j = 0; j < width; j++) {
                 int j_minus_1 = (j - 1 < 0) ? j : j - 1;
                 int j_plus_1 = (j + 1 >= width) ? j : j + 1;

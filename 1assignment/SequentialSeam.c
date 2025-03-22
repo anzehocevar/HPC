@@ -193,6 +193,9 @@ int main(int argc, char *argv[]) {
     // solve with dynamic programming
     for(int iter = 0;iter < num_of_seams;iter++){
 
+        if (DEBUG_MODE)
+            printf("Iteration [%d/%d]\n", iter+1, num_of_seams);
+
         unsigned char *energy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
 
         if (!energy) {

@@ -7,6 +7,7 @@ images="720x480.png 1024x768.png 1920x1200.png 3840x2160.png 7680x4320.png"
 repeat=5
 
 # Output CSV file
+mkdir -p out
 output_csv="benchmark_sequential_results.csv"
 echo "Image,AvgEnergyTime,AvgIdentificationTime,AvgRemovalTime,AvgCopyTime" > "$output_csv"
 
@@ -22,7 +23,7 @@ for img in $images; do
     echo "Benchmarking $img..."
 
     for run in $(seq 1 $repeat); do
-        output_img="out_${base_name}_run${run}.png"
+        output_img="out/out_${base_name}_run${run}.png"
 
         # Run the program and capture the output
         output=$(./SequentialSeam "$img" "$output_img")
@@ -45,7 +46,7 @@ for img in $images; do
     avg_removal=$(printf "%.3f" $(echo "scale=3; $total_removal / $repeat" | bc))
     avg_copy=$(printf "%.3f" $(echo "scale=3; $total_copy / $repeat" | bc))
 
-    echo "$img: Energy=$avg_energy s, Identification=$avg_identification s, Removal=$avg_removal s, Copy=$avg_copy"
+    echo "$img: Energy=$avg_energy s, Identification=$avg_identification s, Removal=$avg_removal s, Copy=$avg_copy s"
 
     # Write to CSV
     echo "$img,$avg_energy,$avg_identification,$avg_removal,$avg_copy" >> "$output_csv"

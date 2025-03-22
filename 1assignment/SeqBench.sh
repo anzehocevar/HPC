@@ -9,7 +9,7 @@ repeat=5
 # Output CSV file
 mkdir -p out
 output_csv="benchmark_sequential_results.csv"
-echo "Image,AvgEnergyTime,AvgIdentificationTime,AvgRemovalTime,AvgCopyTime" > "$output_csv"
+echo "Image,AvgEnergyTime,AvgIdentificationTime,AvgRemovalTime,AvgCopyTime,AvgFullTime" > "$output_csv"
 
 # Loop through each image
 for img in $images; do
@@ -19,6 +19,7 @@ for img in $images; do
     total_identification=0
     total_removal=0
     total_copy=0
+    total_full=0
 
     echo "Benchmarking $img..."
 
@@ -33,11 +34,13 @@ for img in $images; do
         identification_time=$(echo "$output" | grep "Vertical seam identification took" | grep --color=never -E -o "[0-9]+\.[0-9]+")
         removal_time=$(echo "$output" | grep "Seam removal took" | grep --color=never -E -o "[0-9]+\.[0-9]+")
         copy_time=$(echo "$output" | grep "Copying took" | grep --color=never -E -o "[0-9]+\.[0-9]+")
+        full_time=$(echo "$output" | grep "Total time" | grep --color=never -E -o "[0-9]+\.[0-9]+")
 
         total_energy=$(echo "$total_energy + $energy_time" | bc -l)
         total_identification=$(echo "$total_identification + $identification_time" | bc -l)
         total_removal=$(echo "$total_removal + $removal_time" | bc -l)
         total_copy=$(echo "$total_copy + $copy_time" | bc -l)
+        total_full=$(echo "$total_full + $full_time" | bc -l)
     done
 
     # Calculate averages
@@ -45,11 +48,12 @@ for img in $images; do
     avg_identification=$(printf "%.3f" $(echo "scale=3; $total_identification / $repeat" | bc))
     avg_removal=$(printf "%.3f" $(echo "scale=3; $total_removal / $repeat" | bc))
     avg_copy=$(printf "%.3f" $(echo "scale=3; $total_copy / $repeat" | bc))
+    avg_full=$(printf "%.3f" $(echo "scale=3; $total_full / $repeat" | bc))
 
-    echo "$img: Energy=$avg_energy s, Identification=$avg_identification s, Removal=$avg_removal s, Copy=$avg_copy s"
+    echo "$img: Energy=$avg_energy s, Identification=$avg_identification s, Removal=$avg_removal s, Copy=$avg_copy s, Full=$avg_full s"
 
     # Write to CSV
-    echo "$img,$avg_energy,$avg_identification,$avg_removal,$avg_copy" >> "$output_csv"
+    echo "$img,$avg_energy,$avg_identification,$avg_removal,$avg_copy,$avg_full" >> "$output_csv"
 done
 
 echo "Done. Results saved to $output_csv."

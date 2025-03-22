@@ -114,6 +114,23 @@ void calc_energy(unsigned char* input, unsigned char* energy, int width, int hei
 
 }
 
+void calc_image_narrower(unsigned char* image_narrower, unsigned char* image, int* seam, int width, int height, int cpp) {
+    int width_minus_1 = width - 1;  // To make it abundantly clear
+    for (int i = 0; i < height; i++) {
+        int seam_col = seam[i];
+        int dst_col = 0;
+        for (int j = 0; j < width; j++) {  // original width before decrement
+            if (j == seam_col) continue;  // skip the seam pixel
+
+            for (int c = 0; c < cpp; c++) {
+                image_narrower[(i * width_minus_1 + dst_col) * cpp + c] =
+                    image[(i * width + j) * cpp + c];
+            }
+            dst_col++;
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc < 3) {
@@ -218,22 +235,8 @@ int main(int argc, char *argv[]) {
         find_vertical_seam(seam, energy, width, height);
 
         // Create new image by skipping seam pixels in current image
-        int width_minus_1 = width - 1;  // To make it abundantly clear
-        unsigned char *image_narrower = (unsigned char *)malloc(width_minus_1 * height * cpp);
-
-        for (int i = 0; i < height; i++) {
-            int seam_col = seam[i];
-            int dst_col = 0;
-            for (int j = 0; j < width; j++) {  // original width before decrement
-                if (j == seam_col) continue;  // skip the seam pixel
-
-                for (int c = 0; c < cpp; c++) {
-                    image_narrower[(i * width_minus_1 + dst_col) * cpp + c] =
-                        image[(i * width + j) * cpp + c];
-                }
-                dst_col++;
-            }
-        }
+        unsigned char *image_narrower = (unsigned char *)malloc((width-1) * height * cpp);
+        calc_image_narrower(image_narrower, image, seam, width, height, cpp);
 
         // Replace old image
         free(image);

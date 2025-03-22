@@ -13,10 +13,10 @@
 // Use 0 to retain the original number of color channels
 #define COLOR_CHANNELS 0
 
-void copy_image(unsigned char *image_out, const unsigned char *image_in, size_t size) {
+void copy_image(unsigned char *dst, const unsigned char *src, size_t size) {
     #pragma omp parallel for
     for (size_t i = 0; i < size; ++i) {
-        image_out[i] = image_in[i];
+        dst[i] = src[i];
     }
 }
 

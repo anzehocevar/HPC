@@ -61,6 +61,10 @@ int main(int argc, char *argv[]) {
     // Copy the image
     copy_image(image_out, image_in, datasize);
 
+    // measure time
+    double start = omp_get_wtime();
+
+
     // Energy Calculation
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -98,6 +102,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    double energy_end = omp_get_wtime();
+    printf("Energy calculation took %f seconds\n", energy_end - start);
+
     // Grayscale enery image
     // Normalize energy values to 0-255 range
     unsigned char *energy_image = (unsigned char *)malloc(width * height * sizeof(unsigned char));
@@ -128,6 +135,10 @@ int main(int argc, char *argv[]) {
     printf("Energy image saved as energy.png\n");
     // TODO: dynamic allocation
     int seam[height];
+
+    // measure seam carving time
+    double seam_start = omp_get_wtime();
+
     // Vertical seam identification
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
@@ -221,17 +232,19 @@ int main(int argc, char *argv[]) {
         image_out = new_image;
     }
 
+    double seam_end = omp_get_wtime();
+    printf("Seam carving took %f seconds\n", seam_end - seam_start);
 
     // Update final image size and save the result
     stbi_write_png(image_out_name, width, height, cpp, image_out, width * cpp);
 
     printf("Saved image as %s", image_out_name);
 
-
     stbi_image_free(image_in);
     free(image_out);
     free(energy);
 
     printf("Finished seam carving.\n");
+    printf("Total time: %f seconds\n", seam_end - start);
     return 0;
 }

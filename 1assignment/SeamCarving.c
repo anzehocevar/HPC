@@ -136,7 +136,7 @@ void calc_image_narrower(unsigned char* image_narrower, unsigned char* image, in
 int main(int argc, char *argv[]) {
 
     if (argc < 3) {
-        printf("USAGE: sample input_image output_image [num_of_seams (default: 128)] [num_of_threads (default:all)]\n");
+        printf("USAGE: %s input_image output_image [num_of_seams (default: 128)] [num_of_threads (default:all)]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 

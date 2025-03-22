@@ -131,7 +131,8 @@ int main(int argc, char *argv[]) {
     // Vertical seam identification
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
-    for(int num_of_seams = 0;num_of_seams < 1;num_of_seams++){
+    // TODO: include energy calculation inside
+    for(int num_of_seams = 0;num_of_seams < 128;num_of_seams++){
 
         unsigned char *energy_copy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
         memcpy(energy_copy, energy, width * height * sizeof(unsigned char));
@@ -197,28 +198,28 @@ int main(int argc, char *argv[]) {
         // Update image width after seam removal
         width -= 1;
         free(energy_copy);
-    }
 
-    // Save the final image
-    unsigned char *new_image = (unsigned char *)malloc(width * height * cpp);
+        // Save the new image
+        unsigned char *new_image = (unsigned char *)malloc(width * height * cpp);
 
-    for (int i = 0; i < height; i++) {
-        int seam_col = seam[i];
-        int dst_col = 0;
-        for (int j = 0; j < width + 1; j++) {  // original width before decrement
-            if (j == seam_col) continue;  // skip the seam pixel
+        for (int i = 0; i < height; i++) {
+            int seam_col = seam[i];
+            int dst_col = 0;
+            for (int j = 0; j < width + 1; j++) {  // original width before decrement
+                if (j == seam_col) continue;  // skip the seam pixel
 
-            for (int c = 0; c < cpp; c++) {
-                new_image[(i * width + dst_col) * cpp + c] =
-                    image_out[(i * (width + 1) + j) * cpp + c];
+                for (int c = 0; c < cpp; c++) {
+                    new_image[(i * width + dst_col) * cpp + c] =
+                        image_out[(i * (width + 1) + j) * cpp + c];
+                }
+                dst_col++;
             }
-            dst_col++;
         }
-    }
 
-    // Replace old image
-    free(image_out);
-    image_out = new_image;
+        // Replace old image
+        free(image_out);
+        image_out = new_image;
+    }
 
 
     // Update final image size and save the result

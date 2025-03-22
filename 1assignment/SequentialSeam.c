@@ -8,6 +8,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define DEBUG_MODE 1
+#define NUM_OF_SEAMS_DEFAULT 128
 #include "stb_image.h"
 #include "stb_image_write.h"
 
@@ -143,6 +144,12 @@ int main(int argc, char *argv[]) {
     char image_out_name[255];
     snprintf(image_in_name, 255, "%s", argv[1]);
     snprintf(image_out_name, 255, "%s", argv[2]);
+    
+    // Determine number of seams to remove
+    int num_of_seams = NUM_OF_SEAMS_DEFAULT;
+    if (argc > 3)
+        num_of_seams = (int) strtol(argv[3], NULL, 10);
+    printf("Number of seams: %d\n", num_of_seams);
 
     // Read image
     int width, height, cpp;
@@ -174,7 +181,7 @@ int main(int argc, char *argv[]) {
 
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
-    for(int num_of_seams = 0;num_of_seams < 128;num_of_seams++){
+    for(int iter = 0;iter < num_of_seams;iter++){
 
         unsigned char *energy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
 
@@ -193,7 +200,7 @@ int main(int argc, char *argv[]) {
         double energy_end = omp_get_wtime();
         printf("Energy calculation took %f seconds\n", energy_end - start);
 
-        if (DEBUG_MODE && num_of_seams == 0) {
+        if (DEBUG_MODE && iter == 0) {
             // Grayscale energy image
             // Normalize energy values to 0-255 range
             unsigned char *energy_image = (unsigned char *)malloc(width * height * sizeof(unsigned char));
@@ -252,7 +259,7 @@ int main(int argc, char *argv[]) {
     // Update final image size and save the result
     stbi_write_png(image_out_name, width, height, cpp, image, width * cpp);
 
-    printf("Saved image as %s", image_out_name);
+    printf("Saved image as %s\n", image_out_name);
 
     stbi_image_free(image_in);
     free(image);

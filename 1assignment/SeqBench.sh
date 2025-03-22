@@ -27,7 +27,7 @@ for img in $images; do
         output_img="out/out_${base_name}_run${run}.png"
 
         # Run the program and capture the output
-        output=$(./SequentialSeam "$img" "$output_img")
+        output=$(./SeamCarving "$img" "$output_img")
 
         # Parse times from output
         energy_time=$(echo "$output" | grep "Energy calculation took" | grep --color=never -E -o "[0-9]+\.[0-9]+")

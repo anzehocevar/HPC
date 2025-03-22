@@ -7,6 +7,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define DEBUG_MODE 1
 #include "stb_image.h"
 #include "stb_image_write.h"
 
@@ -120,12 +121,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Read filenames from command line arguments
     char image_in_name[255];
     char image_out_name[255];
-
     snprintf(image_in_name, 255, "%s", argv[1]);
     snprintf(image_out_name, 255, "%s", argv[2]);
 
+    // Read image
     int width, height, cpp;
     unsigned char *image_in = stbi_load(image_in_name, &width, &height, &cpp, COLOR_CHANNELS);
 
@@ -155,7 +157,6 @@ int main(int argc, char *argv[]) {
 
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
-    // TODO: include energy calculation inside
     for(int num_of_seams = 0;num_of_seams < 128;num_of_seams++){
 
         unsigned char *energy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
@@ -175,8 +176,8 @@ int main(int argc, char *argv[]) {
         double energy_end = omp_get_wtime();
         printf("Energy calculation took %f seconds\n", energy_end - start);
 
-        if (num_of_seams == 0) {
-            // Grayscale enery image
+        if (DEBUG_MODE && num_of_seams == 0) {
+            // Grayscale energy image
             // Normalize energy values to 0-255 range
             unsigned char *energy_image = (unsigned char *)malloc(width * height * sizeof(unsigned char));
             calc_energy_image(energy_image, energy, width, height);
@@ -216,18 +217,7 @@ int main(int argc, char *argv[]) {
         // Fill array seam with column indexes of path
         find_vertical_seam(seam, energy, width, height);
 
-        // Remove the vertical seam from the image
-        // for(int i = 0;i < height;i++){
-        //     int seam_col = seam[i]; // Column to remove
-        //     for(int j = seam_col;j < width - 1;j++){
-        //         for(int c = 0;c < cpp;c++){
-        //             image[(i * width + j) * cpp + c] = image[(i * width + j + 1) * cpp + c];
-        //         }
-        //     }
-        // }
-        free(energy);
-
-        // Save the new image
+        // Create new image by skipping seam pixels in current image
         int width_minus_1 = width - 1;  // To make it abundantly clear
         unsigned char *image_narrower = (unsigned char *)malloc(width_minus_1 * height * cpp);
 
@@ -245,11 +235,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // Update image width after seam removal
-        width -= 1;
         // Replace old image
         free(image);
+        free(energy);
         image = image_narrower;
+        // Update image width after seam removal
+        width -= 1;
     }
 
     double seam_end = omp_get_wtime();

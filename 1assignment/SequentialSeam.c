@@ -20,6 +20,36 @@ void copy_image(unsigned char *dst, const unsigned char *src, size_t size) {
     }
 }
 
+void find_vertical_seam(int* seam, unsigned char* energy, int width, int height) {
+    // Find lowest value in top row
+    int min_position = 0;
+    int min_energy = INT_MAX;
+    for(int i = 0;i < width;i++){
+        if(energy[i] < min_energy){
+            min_energy = energy[i];
+            min_position = i;
+        }
+    }
+    seam[0] = min_position;
+
+    // Iteratively select the lowest energy path
+    for(int i = 1;i < height;i++){
+        int next_position = min_position;
+        int next_energy = INT_MAX;
+        for(int j = -1;j < 2;j++){
+            // bounds check
+            if(min_position + j >= 0 && min_position + j < width){
+                if(energy[(i + 1) * width + min_position + j] < next_energy){
+                    next_energy = energy[(i + 1) * width + min_position + j];
+                    next_position = min_position + j;
+                }
+            }
+        }
+        seam[i] = next_position;
+        min_position = next_position;
+    }
+}
+
 // Grayscale enery image
 // Normalize energy values to 0-255 range
 unsigned char* calc_energy_image(unsigned char* energy_image, unsigned char* energy, int width, int height) {
@@ -127,7 +157,6 @@ int main(int argc, char *argv[]) {
     // measure time
     double start = omp_get_wtime();
 
-
     // Energy Calculation
     calc_energy(image_out, energy, width, height, cpp);
 
@@ -152,7 +181,6 @@ int main(int argc, char *argv[]) {
     // measure seam carving time
     double seam_start = omp_get_wtime();
 
-    // Vertical seam identification
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
     // TODO: include energy calculation inside
@@ -161,6 +189,7 @@ int main(int argc, char *argv[]) {
         unsigned char *energy_copy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
         memcpy(energy_copy, energy, width * height * sizeof(unsigned char));
 
+        // Vertical seam identification
         // start at the bottom
         for (int i = height - 2; i >= 0; i--) {
             for (int j = 0; j < width; j++) {
@@ -182,33 +211,8 @@ int main(int argc, char *argv[]) {
         // int seam[height];
 
         // Vertical seam removal
-        // Find lowest value in top row
-        int min_position = 0;
-        int min_energy = INT_MAX;
-        for(int i = 0;i < width;i++){
-            if(energy[i] < min_energy){
-                min_energy = energy[i];
-                min_position = i;
-            }
-        }
-        seam[0] = min_position;
-
-        // Iteratively select the lowest energy path
-        for(int i = 1;i < height;i++){
-            int next_position = min_position;
-            int next_energy = INT_MAX;
-            for(int j = -1;j < 2;j++){
-                // bounds check
-                if(min_position + j >= 0 && min_position + j < width){
-                    if(energy[(i + 1) * width + min_position + j] < next_energy){
-                        next_energy = energy[(i + 1) * width + min_position + j];
-                        next_position = min_position + j;
-                    }
-                }
-            }
-            seam[i] = next_position;
-            min_position = next_position;
-        }
+        // Fill array seam with column indexes of path
+        find_vertical_seam(seam, energy, width, height);
 
         // Remove the vertical seam from the image
         for(int i = 0;i < height;i++){

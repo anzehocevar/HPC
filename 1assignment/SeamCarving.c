@@ -77,7 +77,7 @@ unsigned char* calc_energy_image(unsigned char* energy_image, unsigned char* ene
 }
 
 void calc_energy(unsigned char* input, unsigned char* energy, int width, int height, int cpp) {
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) schedule(static)
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             double Gx[3] = {0.0, 0.0, 0.0};

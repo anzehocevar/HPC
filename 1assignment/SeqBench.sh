@@ -12,7 +12,8 @@ repeat=5
 # Output CSV file
 mkdir -p out
 output_csv="benchmark_results.csv"
-echo "Image,NumThreads,AvgEnergyTime,AvgIdentificationTime,AvgRemovalTime,AvgCopyTime,AvgFullTime" > "$output_csv"
+echo "Hostname: $(hostname)"
+echo "Hostname,Image,NumThreads,AvgEnergyTime,AvgIdentificationTime,AvgRemovalTime,AvgCopyTime,AvgFullTime" > "$output_csv"
 
 # Do everything for all num_threads_options
 for num_threads in $num_threads_options; do
@@ -58,7 +59,7 @@ for num_threads in $num_threads_options; do
         echo "$img: NumThreads=$num_threads, Energy=$avg_energy s, Identification=$avg_identification s, Removal=$avg_removal s, Copy=$avg_copy s, Full=$avg_full s"
 
         # Write to CSV
-        echo "$img,$num_threads,$avg_energy,$avg_identification,$avg_removal,$avg_copy,$avg_full" >> "$output_csv"
+        echo "$(hostname),$img,$num_threads,$avg_energy,$avg_identification,$avg_removal,$avg_copy,$avg_full" >> "$output_csv"
     done
 done
 

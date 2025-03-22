@@ -11,7 +11,7 @@ repeat=5
 
 # Output CSV file
 mkdir -p out
-output_csv="benchmark_sequential_results.csv"
+output_csv="benchmark_results.csv"
 echo "Image,NumThreads,AvgEnergyTime,AvgIdentificationTime,AvgRemovalTime,AvgCopyTime,AvgFullTime" > "$output_csv"
 
 # Do everything for all num_threads_options

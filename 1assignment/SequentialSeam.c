@@ -136,10 +136,9 @@ int main(int argc, char *argv[]) {
 
     printf("Loaded image %s of size %dx%d.\n", image_in_name, width, height);
     size_t datasize = (size_t)width * height * cpp;
-    unsigned char *image_out = (unsigned char *)malloc(datasize * sizeof(unsigned char));
-    unsigned char *energy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
+    unsigned char *image = (unsigned char *)malloc(datasize * sizeof(unsigned char));
 
-    if (!image_out || !energy) {
+    if (!image) {
         printf("Memory allocation failed!\n");
         stbi_image_free(image_in);
         exit(EXIT_FAILURE);
@@ -152,42 +151,47 @@ int main(int argc, char *argv[]) {
     }
 
     // Copy the image
-    copy_image(image_out, image_in, datasize);
-
-    // measure time
-    double start = omp_get_wtime();
-
-    // Energy Calculation
-    calc_energy(image_out, energy, width, height, cpp);
-
-    double energy_end = omp_get_wtime();
-    printf("Energy calculation took %f seconds\n", energy_end - start);
-
-    // Grayscale enery image
-    // Normalize energy values to 0-255 range
-    unsigned char *energy_image = (unsigned char *)malloc(width * height * sizeof(unsigned char));
-    calc_energy_image(energy_image, energy, width, height);
-
-    // Save the energy image as a grayscale PNG
-    stbi_write_png("energy.png", width, height, 1, energy_image, width);
-
-    // Free allocated memory for energy image
-    free(energy_image);
-
-    printf("Energy image saved as energy.png\n");
-    // TODO: dynamic allocation
-    int seam[height];
-
-    // measure seam carving time
-    double seam_start = omp_get_wtime();
+    copy_image(image, image_in, datasize);
 
     // seam - path from top to bottom with lowest Energy
     // solve with dynamic programming
     // TODO: include energy calculation inside
     for(int num_of_seams = 0;num_of_seams < 128;num_of_seams++){
 
-        unsigned char *energy_copy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
-        memcpy(energy_copy, energy, width * height * sizeof(unsigned char));
+        unsigned char *energy = (unsigned char *)malloc(width * height * sizeof(unsigned char));
+
+        if (!energy) {
+            printf("Memory allocation failed!\n");
+            stbi_image_free(image_in);
+            exit(EXIT_FAILURE);
+        }
+
+        // measure time
+        double start = omp_get_wtime();
+
+        // Energy Calculation
+        calc_energy(image, energy, width, height, cpp);
+
+        double energy_end = omp_get_wtime();
+        printf("Energy calculation took %f seconds\n", energy_end - start);
+
+        if (num_of_seams == 0) {
+            // Grayscale enery image
+            // Normalize energy values to 0-255 range
+            unsigned char *energy_image = (unsigned char *)malloc(width * height * sizeof(unsigned char));
+            calc_energy_image(energy_image, energy, width, height);
+
+            // Save the energy image as a grayscale PNG
+            stbi_write_png("energy.png", width, height, 1, energy_image, width);
+
+            // Free allocated memory for energy image
+            free(energy_image);
+
+            printf("Energy image saved as energy.png\n");
+        }
+
+        // measure seam carving time
+        double seam_start = omp_get_wtime();
 
         // Vertical seam identification
         // start at the bottom
@@ -196,72 +200,70 @@ int main(int argc, char *argv[]) {
                 int j_minus_1 = (j - 1 < 0) ? j : j - 1;
                 int j_plus_1 = (j + 1 >= width) ? j : j + 1;
         
-                int below_left = energy_copy[(i + 1) * width + j_minus_1];
-                int below = energy_copy[(i + 1) * width + j];
-                int below_right = energy_copy[(i + 1) * width + j_plus_1];
+                int below_left = energy[(i + 1) * width + j_minus_1];
+                int below = energy[(i + 1) * width + j];
+                int below_right = energy[(i + 1) * width + j_plus_1];
         
-                energy_copy[i * width + j] += fmin(fmin(below_left, below), below_right);
+                energy[i * width + j] += fmin(fmin(below_left, below), below_right);
             }
-        }        
-
-        // replace energy with energy copy
-        memcpy(energy, energy_copy, width * height * sizeof(unsigned char));
+        }
 
         // Save location of pixels with lowest path
-        // int seam[height];
+        // TODO: dynamic allocation
+        int seam[height];
 
         // Vertical seam removal
         // Fill array seam with column indexes of path
         find_vertical_seam(seam, energy, width, height);
 
         // Remove the vertical seam from the image
-        for(int i = 0;i < height;i++){
-            int seam_col = seam[i]; // Column to remove
-            for(int j = seam_col;j < width - 1;j++){
-                for(int c = 0;c < cpp;c++){
-                    image_out[(i * width + j) * cpp + c] = image_out[(i * width + j + 1) * cpp + c];
-                }
-            }
-        }
-        // Update image width after seam removal
-        width -= 1;
-        free(energy_copy);
+        // for(int i = 0;i < height;i++){
+        //     int seam_col = seam[i]; // Column to remove
+        //     for(int j = seam_col;j < width - 1;j++){
+        //         for(int c = 0;c < cpp;c++){
+        //             image[(i * width + j) * cpp + c] = image[(i * width + j + 1) * cpp + c];
+        //         }
+        //     }
+        // }
+        free(energy);
 
         // Save the new image
-        unsigned char *new_image = (unsigned char *)malloc(width * height * cpp);
+        int width_minus_1 = width - 1;  // To make it abundantly clear
+        unsigned char *image_narrower = (unsigned char *)malloc(width_minus_1 * height * cpp);
 
         for (int i = 0; i < height; i++) {
             int seam_col = seam[i];
             int dst_col = 0;
-            for (int j = 0; j < width + 1; j++) {  // original width before decrement
+            for (int j = 0; j < width; j++) {  // original width before decrement
                 if (j == seam_col) continue;  // skip the seam pixel
 
                 for (int c = 0; c < cpp; c++) {
-                    new_image[(i * width + dst_col) * cpp + c] =
-                        image_out[(i * (width + 1) + j) * cpp + c];
+                    image_narrower[(i * width_minus_1 + dst_col) * cpp + c] =
+                        image[(i * width + j) * cpp + c];
                 }
                 dst_col++;
             }
         }
 
+        // Update image width after seam removal
+        width -= 1;
         // Replace old image
-        free(image_out);
-        image_out = new_image;
+        free(image);
+        image = image_narrower;
     }
 
     double seam_end = omp_get_wtime();
-    printf("Seam carving took %f seconds\n", seam_end - seam_start);
+    // printf("Seam carving took %f seconds\n", seam_end - seam_start);
 
     // Update final image size and save the result
-    stbi_write_png(image_out_name, width, height, cpp, image_out, width * cpp);
+    stbi_write_png(image_out_name, width, height, cpp, image, width * cpp);
 
     printf("Saved image as %s", image_out_name);
 
     stbi_image_free(image_in);
-    free(image_out);
-    free(energy);
+    free(image);
 
     printf("Finished seam carving.\n");
-    printf("Total time: %f seconds\n", seam_end - start);
+    // printf("Total time: %f seconds\n", seam_end - start);
     return 0;
 }

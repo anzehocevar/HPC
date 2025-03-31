@@ -1,0 +1,10 @@
+nvcc warning : Support for offline compilation for architectures prior to '<compute/sm/lto>_75' will be removed in a future release (Use -Wno-deprecated-gpu-targets to suppress warning).
+sample.cu(20): warning #177-D: variable "T" was declared but never referenced
+      __attribute__((shared)) unsigned char T[256];
+                                            ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+Loaded image valve.png of size 600x450.
+DEVICE: START COPY
+Kernel Execution time is: 45.281 milliseconds 

@@ -24,7 +24,7 @@ void copy_image(unsigned char *dst, const unsigned char *src, size_t size) {
     }
 }
 
-void histogram_equalization(unsigned char* imageIn, unsigned char* imageOut, int height, int width, int cpp) {
+void histogram_equalization(unsigned char* imageIn, unsigned char* imageOut, unsigned char* yuvCache, int height, int width, int cpp) {
 
     // Build luminance histogram
     for (int y = 0; y < height; y++) {
@@ -35,8 +35,13 @@ void histogram_equalization(unsigned char* imageIn, unsigned char* imageOut, int
             float blue  = (float) imageIn[(y * width + x) * cpp + 2];
             // RGB -> YUV
             unsigned char Y = (unsigned char) (0.299 * red + 0.587 * green + 0.114 * blue + 0);
-            // unsigned char U = (unsigned char) ((-0.168736 * red) + (-0.331264 * green) + 0.5 * blue + 128);
-            // unsigned char V = (unsigned char) (0.5 * red + (-0.418688 * green) + (-0.081312 * blue) + 128);
+            unsigned char U = (unsigned char) ((-0.168736 * red) + (-0.331264 * green) + 0.5 * blue + 128);
+            unsigned char V = (unsigned char) (0.5 * red + (-0.418688 * green) + (-0.081312 * blue) + 128);
+            // Save YUV values for other loop
+            yuvCache[(y * width + x) * cpp + 0] = Y;
+            yuvCache[(y * width + x) * cpp + 1] = U;
+            yuvCache[(y * width + x) * cpp + 2] = V;
+            // Update histogram
             histogram[Y] += 1;
         }
     }
@@ -54,14 +59,10 @@ void histogram_equalization(unsigned char* imageIn, unsigned char* imageOut, int
     // Calculate new luminance level & convert back to RGB
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            // Read RGB
-            float red   = (float) imageIn[(y * width + x) * cpp + 0];
-            float green = (float) imageIn[(y * width + x) * cpp + 1];
-            float blue  = (float) imageIn[(y * width + x) * cpp + 2];
-            // RGB -> YUV
-            unsigned char Y = (unsigned char) (0.299 * red + 0.587 * green + 0.114 * blue + 0);
-            unsigned char U = (unsigned char) ((-0.168736 * red) + (-0.331264 * green) + 0.5 * blue + 128);
-            unsigned char V = (unsigned char) (0.5 * red + (-0.418688 * green) + (-0.081312 * blue) + 128);
+            // Read YUV from cache
+            unsigned char Y = yuvCache[(y * width + x) * cpp + 0];
+            unsigned char U = yuvCache[(y * width + x) * cpp + 1];
+            unsigned char V = yuvCache[(y * width + x) * cpp + 2];
             // New luminance level
             unsigned char Y_new = (unsigned char) ((histogramCumulative[Y] - minCdf_f)/(height*width - minCdf_f) * (LUMINANCE_LEVELS-1.0));
             // YUV -> RGB
@@ -106,8 +107,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Run histogram equalization
+    unsigned char* yuvCache = (unsigned char*) malloc(sizeof(unsigned char) * height * width * 3);
     double t0 = omp_get_wtime();
-    histogram_equalization(imageIn, imageOut, height, width, cpp);
+    histogram_equalization(imageIn, imageOut, yuvCache, height, width, cpp);
     double t_total_ms = 1000*(omp_get_wtime() - t0);
     printf("Total duration: %.0f ms\n", t_total_ms);
 
@@ -117,6 +119,7 @@ int main(int argc, char *argv[]) {
 
     // Free allocated variables
     stbi_image_free(imageIn);
+    free(yuvCache);
     free(imageOut);
 
     return 0;

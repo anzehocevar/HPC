@@ -74,7 +74,7 @@ void histogram_equalization(unsigned char* imageIn, unsigned char* imageOut, int
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 2) {
+    if (argc < 3) {
         printf("USAGE: %s input_image output_image\n", argv[0]);
         exit(EXIT_FAILURE);
     }

@@ -77,6 +77,7 @@ __global__ void computeNewLuminance(const unsigned char *imageIn, unsigned char 
         minCdf = d_histogramCumulative[i];
     float minCdf_f = (float) minCdf;
 
+    // Calculate new luminance level
     unsigned char Y_new = (unsigned char) ((d_histogramCumulative[Y] - minCdf_f)/(height*width - minCdf_f) * (LUMINANCE_LEVELS-1.0));
 
     // YUV -> RGB

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <sys/param.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -63,9 +64,9 @@ void histogram_equalization(unsigned char* imageIn, unsigned char* imageOut, int
             // New luminance level
             unsigned char Y_new = (unsigned char) ((histogramCumulative[Y] - minCdf_f)/(height*width - minCdf_f) * (LUMINANCE_LEVELS-1.0));
             // YUV -> RGB
-            imageOut[(y * width + x) * cpp + 0] = (Y_new + 1.402 * (V-128));
-            imageOut[(y * width + x) * cpp + 1] = (Y_new - 0.344136 * (U-128) - 0.714136 * (V-128));
-            imageOut[(y * width + x) * cpp + 2] = (Y_new + 1.772 * (U-128));
+            imageOut[(y * width + x) * cpp + 0] = MAX(0, (Y_new + 1.402 * (V-128)));
+            imageOut[(y * width + x) * cpp + 1] = MAX(0, (Y_new - 0.344136 * (U-128) - 0.714136 * (V-128)));
+            imageOut[(y * width + x) * cpp + 2] = MAX(0, (Y_new + 1.772 * (U-128)));
         }
     }
 

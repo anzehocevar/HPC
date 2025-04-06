@@ -4,6 +4,7 @@
 #include <math.h>
 #include <limits.h>
 #include <sys/param.h>
+#include <omp.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -105,7 +106,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Run histogram equalization
+    double t0 = omp_get_wtime();
     histogram_equalization(imageIn, imageOut, height, width, cpp);
+    double t_total_ms = 1000*(omp_get_wtime() - t0);
+    printf("Total duration: %.0f ms\n", t_total_ms);
 
     // Update final image size and save the result
     stbi_write_png(imageOutName, width, height, cpp, imageOut, width * cpp);

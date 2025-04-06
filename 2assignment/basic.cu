@@ -81,9 +81,12 @@ __global__ void computeNewLuminance(const unsigned char *imageIn, unsigned char 
     unsigned char Y_new = (unsigned char) ((d_histogramCumulative[Y] - minCdf_f)/(height*width - minCdf_f) * (LUMINANCE_LEVELS-1.0));
 
     // YUV -> RGB
-    imageOut[(gidy * width + gidx) * cpp + 0] = (Y_new + 1.402 * (V-128));
-    imageOut[(gidy * width + gidx) * cpp + 1] = (Y_new - 0.344136 * (U-128) - 0.714136 * (V-128));
-    imageOut[(gidy * width + gidx) * cpp + 2] = (Y_new + 1.772 * (U-128));
+    red = (Y_new + 1.402 * (V-128));
+    green = (Y_new - 0.344136 * (U-128) - 0.714136 * (V-128));
+    blue = (Y_new + 1.772 * (U-128));
+    imageOut[(gidy * width + gidx) * cpp + 0] = MIN(LUMINANCE_LEVELS-1, MAX(0, red));
+    imageOut[(gidy * width + gidx) * cpp + 1] = MIN(LUMINANCE_LEVELS-1, MAX(0, green));
+    imageOut[(gidy * width + gidx) * cpp + 2] = MIN(LUMINANCE_LEVELS-1, MAX(0, blue));
 
 }
 

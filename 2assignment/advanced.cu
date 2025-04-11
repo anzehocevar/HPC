@@ -16,7 +16,8 @@
 __device__ int d_histogram[LUMINANCE_LEVELS];
 __device__ int d_histogramCumulative[LUMINANCE_LEVELS];
 
-__global__ void computeHistogramOptimized(const unsigned char *imageIn, const int width, const int height, const int cpp) {
+__global__ void computeHistogramOptimized(const unsigned char *imageIn, unsigned char *imageOut, const int width, const int height, const int cpp)
+{
     __shared__ unsigned int localHist[LUMINANCE_LEVELS];
     int tid = threadIdx.y * blockDim.x + threadIdx.x;
 

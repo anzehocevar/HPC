@@ -25,7 +25,7 @@ __global__ void computeHistogram(const unsigned char *imageIn, unsigned char *im
     if (gidx >= width || gidy >= height)
         return;
     if (gidx == 0 & gidy == 0) {
-        printf("DEVICE: START COPY\n");
+        printf("DEVICE: Computing histogram\n");
     }
 
     // Read RGB
@@ -154,9 +154,6 @@ int main(int argc, char *argv[])
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
     printf("Kernel Execution time is: %0.3f milliseconds \n", milliseconds);
-    
-    // for (int i = 0; i < LUMINANCE_LEVELS; i++)
-    //     printf("%d, ", h_histogramCumulative[i]);
 
     // Write the output file
     char szImage_out_name_temp[255];

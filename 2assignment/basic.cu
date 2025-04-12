@@ -50,7 +50,7 @@ __global__ void computeHistogram(const unsigned char *imageIn, const int width, 
 
 }
 
-__global__ void computeHistogramCumulative(const unsigned char *imageIn, unsigned char *imageOut, const int width, const int height, const int cpp) {
+__global__ void computeHistogramCumulative(const int width, const int height, const int cpp) {
     // Get global indexes
     int gidx = blockDim.x * blockIdx.x + threadIdx.x;
     int gidy = blockDim.y * blockIdx.y + threadIdx.y;
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     computeHistogram<<<gridSize_1, blockSize_1>>>(d_imageIn, width, height, cpp);
     cudaEventRecord(t_12);
     cudaEventSynchronize(t_12);
-    computeHistogramCumulative<<<gridSize_2, blockSize_2>>>(d_imageIn, d_imageOut, width, height, cpp);
+    computeHistogramCumulative<<<gridSize_2, blockSize_2>>>(width, height, cpp);
     cudaEventRecord(t_23);
     cudaEventSynchronize(t_23);
     computeNewLuminance<<<gridSize_3, blockSize_3>>>(d_imageIn, d_imageOut, width, height, cpp);

@@ -24,6 +24,10 @@
 __device__ int d_histogram[LUMINANCE_LEVELS];
 __device__ int d_histogramCumulative[LUMINANCE_LEVELS];
 
+__global__ void dummyKernel() {
+    // empty warm-up kernel
+}
+
 __global__ void computeHistogram(const unsigned char *imageIn, const int width, const int height, const int cpp)
 {
 
@@ -163,6 +167,10 @@ int main(int argc, char *argv[])
     cudaEventCreate(&t_12);
     cudaEventCreate(&t_23);
     cudaEventCreate(&t_34);
+
+    // Warm-up GPU
+    dummyKernel<<<1, 1>>>();
+    // cudaDeviceSynchronize();
 
     // Copy image to device and run kernel
     cudaEventRecord(start);

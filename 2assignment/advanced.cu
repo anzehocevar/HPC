@@ -148,9 +148,15 @@ __global__ void applyEqualization(unsigned char *imageIn, unsigned char *imageOu
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        printf("Usage: %s input.png output.png\n", argv[0]);
+        printf("USAGE: %s input_image output_image [block_size_x] [block_size_y]\n", argv[0]);
         return 1;
     }
+    int blockSizeX = 0;
+    if (argc > 3)
+        blockSizeX = atoi(argv[3]);
+    int blockSizeY = 0;
+    if (argc > 4)
+        blockSizeY = atoi(argv[4]);
 
     // Load input image
     int width, height, cpp;
@@ -166,9 +172,13 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&d_imageIn, dataSize);
     cudaMalloc(&d_imageOut, dataSize);
 
-    dim3 blockSize_1(BLOCK_SIZE_X_1, BLOCK_SIZE_Y_1);
+    int blockSizeX_1 = (blockSizeX > 0) ? blockSizeX : BLOCK_SIZE_X_1;
+    int blockSizeY_1 = (blockSizeY > 0) ? blockSizeY : BLOCK_SIZE_Y_1;
+    dim3 blockSize_1(blockSizeX_1, blockSizeY_1);
     dim3 gridSize_1((width + (blockSize_1.x-1)) / blockSize_1.x, (height + (blockSize_1.y-1)) / blockSize_1.y);
-    dim3 blockSize_4(BLOCK_SIZE_X_4, BLOCK_SIZE_Y_4);
+    int blockSizeX_4 = (blockSizeX > 0) ? blockSizeX : BLOCK_SIZE_X_4;
+    int blockSizeY_4 = (blockSizeY > 0) ? blockSizeY : BLOCK_SIZE_Y_4;
+    dim3 blockSize_4(blockSizeX_4, blockSizeY_4);
     dim3 gridSize_4((width + (blockSize_4.x-1)) / blockSize_4.x, (height + (blockSize_4.y-1)) / blockSize_4.y);
 
     // Start CUDA timing

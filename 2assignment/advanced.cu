@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&d_imageOut, dataSize);
 
     dim3 blockSize(16, 16);
-    dim3 gridSize((width + 15) / 16, (height + 15) / 16);
+    dim3 gridSize((width + (blockSize.x-1)) / blockSize.x, (height + (blockSize.y-1)) / blockSize.y);
 
     // Start CUDA timing
     cudaEvent_t start, stop, t_01, t_12, t_23, t_34, t_45;

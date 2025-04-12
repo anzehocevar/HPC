@@ -11,6 +11,7 @@
 #include "stb_image_write.h"
 
 #define COLOR_CHANNELS 0
+#define DEBUG_MODE 0
 
 #define BLOCK_SIZE_X_1 8
 #define BLOCK_SIZE_Y_1 8
@@ -29,7 +30,7 @@ __global__ void computeHistogram(const unsigned char *imageIn, const int width, 
     // Get global indexes
     int gidx = blockDim.x * blockIdx.x + threadIdx.x;
     int gidy = blockDim.y * blockIdx.y + threadIdx.y;
-    if (gidx == 0 & gidy == 0) {
+    if (DEBUG_MODE && gidx == 0 && gidy == 0) {
         printf("DEVICE: Computing histogram\n");
     }
 
@@ -55,7 +56,7 @@ __global__ void computeHistogramCumulative(const unsigned char *imageIn, unsigne
     int gidy = blockDim.y * blockIdx.y + threadIdx.y;
     if (gidx >= width || gidy >= height)
         return;
-    if (gidx == 0 & gidy == 0) {
+    if (DEBUG_MODE && gidx == 0 && gidy == 0) {
         printf("DEVICE: Computing cumulative histogram\n");
     }
     if (gidx == 0 & gidy == 0) {
@@ -74,7 +75,7 @@ __global__ void computeNewLuminance(const unsigned char *imageIn, unsigned char 
     int gidy = blockDim.y * blockIdx.y + threadIdx.y;
     if (gidx >= width || gidy >= height)
         return;
-    if (gidx == 0 & gidy == 0) {
+    if (DEBUG_MODE && gidx == 0 && gidy == 0) {
         printf("DEVICE: Computing new luminance levels\n");
     }
 

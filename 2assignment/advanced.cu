@@ -165,26 +165,42 @@ int main(int argc, char *argv[]) {
     dim3 gridSize((width + 15) / 16, (height + 15) / 16);
 
     // Start CUDA timing
-    cudaEvent_t start, stop;
+    cudaEvent_t start, stop, t_01, t_12, t_23, t_34, t_45;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
+    cudaEventCreate(&t_01);
+    cudaEventCreate(&t_12);
+    cudaEventCreate(&t_23);
+    cudaEventCreate(&t_34);
+    cudaEventCreate(&t_45);
     cudaEventRecord(start);
+
     checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, dataSize, cudaMemcpyHostToDevice));
+    cudaEventRecord(t_01);
+    cudaEventSynchronize(t_01);
 
     // Compute histogram using shared memory
     computeHistogramShared<<<gridSize, blockSize>>>(d_imageIn, width, height, cpp);
+    cudaEventRecord(t_12);
+    cudaEventSynchronize(t_12);
     cudaDeviceSynchronize();
 
     // Compute CDF using parallel scan
     blellochScan<<<1, LUMINANCE_LEVELS>>>(d_cdf, LUMINANCE_LEVELS);
+    cudaEventRecord(t_23);
+    cudaEventSynchronize(t_23);
     cudaDeviceSynchronize();
 
     // Create LUT from CDF
     computeLUT<<<1, LUMINANCE_LEVELS>>>(d_cdf, LUMINANCE_LEVELS, width * height);
+    cudaEventRecord(t_34);
+    cudaEventSynchronize(t_34);
     cudaDeviceSynchronize();
 
     // Apply equalization using LUT
     applyEqualization<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
+    cudaEventRecord(t_45);
+    cudaEventSynchronize(t_45);
     cudaDeviceSynchronize();
 
     // Copy result to host and stop timing
@@ -192,9 +208,27 @@ int main(int argc, char *argv[]) {
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
 
+    float ms_0;
+    cudaEventElapsedTime(&ms_0, start, t_01);
+    printf("Memcpy (RAM -> VRAM) time is: %0.3f milliseconds \n", ms_0);
+    float ms_1;
+    cudaEventElapsedTime(&ms_1, t_01, t_12);
+    printf("Kernel 1 time is: %0.3f milliseconds \n", ms_1);
+    float ms_2;
+    cudaEventElapsedTime(&ms_2, t_12, t_23);
+    printf("Kernel 2 time is: %0.3f milliseconds \n", ms_2);
+    float ms_3;
+    cudaEventElapsedTime(&ms_3, t_23, t_34);
+    printf("Kernel 3 time is: %0.3f milliseconds \n", ms_3);
+    float ms_4;
+    cudaEventElapsedTime(&ms_4, t_34, t_45);
+    printf("Kernel 4 time is: %0.3f milliseconds \n", ms_4);
+    float ms_5;
+    cudaEventElapsedTime(&ms_5, t_45, stop);
+    printf("Memcpy (VRAM -> RAM) time is: %0.3f milliseconds \n", ms_5);
     float ms;
     cudaEventElapsedTime(&ms, start, stop);
-    printf("Parallel Histogram Equalization took %.3f ms\n", ms);
+    printf("Total execution time is: %0.3f milliseconds \n", ms);
 
     // Write output image
     stbi_write_png(argv[2], width, height, cpp, h_imageOut, width * cpp);

@@ -156,15 +156,19 @@ int main(int argc, char *argv[])
     // CUDA MALLOC,..
 
     // Use CUDA events to measure execution time
-    cudaEvent_t start, stop, t_12, t_23;
+    cudaEvent_t start, stop, t_01, t_12, t_23, t_34;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
+    cudaEventCreate(&t_01);
     cudaEventCreate(&t_12);
     cudaEventCreate(&t_23);
+    cudaEventCreate(&t_34);
 
     // Copy image to device and run kernel
     cudaEventRecord(start);
     checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, datasize, cudaMemcpyHostToDevice));
+    cudaEventRecord(t_01);
+    cudaEventSynchronize(t_01);
     computeHistogram<<<gridSize_1, blockSize_1>>>(d_imageIn, width, height, cpp);
     cudaEventRecord(t_12);
     cudaEventSynchronize(t_12);
@@ -172,23 +176,30 @@ int main(int argc, char *argv[])
     cudaEventRecord(t_23);
     cudaEventSynchronize(t_23);
     computeNewLuminance<<<gridSize_3, blockSize_3>>>(d_imageIn, d_imageOut, width, height, cpp);
+    cudaEventRecord(t_34);
+    cudaEventSynchronize(t_34);
     checkCudaErrors(cudaMemcpy(h_imageOut, d_imageOut, datasize, cudaMemcpyDeviceToHost));
     // cudaDeviceSynchronize();
     getLastCudaError("Kernel execution failed\n");
     cudaEventRecord(stop);
-
     cudaEventSynchronize(stop);
 
     // Print time
+    float milliseconds_0 = 0;
+    cudaEventElapsedTime(&milliseconds_0, start, t_01);
+    printf("Memcpy (RAM -> VRAM) time is: %0.3f milliseconds \n", milliseconds_0);
     float milliseconds_1 = 0;
-    cudaEventElapsedTime(&milliseconds_1, start, t_12);
+    cudaEventElapsedTime(&milliseconds_1, t_01, t_12);
     printf("Kernel 1 time is: %0.3f milliseconds \n", milliseconds_1);
     float milliseconds_2 = 0;
     cudaEventElapsedTime(&milliseconds_2, t_12, t_23);
     printf("Kernel 2 time is: %0.3f milliseconds \n", milliseconds_2);
     float milliseconds_3 = 0;
-    cudaEventElapsedTime(&milliseconds_3, t_23, stop);
+    cudaEventElapsedTime(&milliseconds_3, t_23, t_34);
     printf("Kernel 3 time is: %0.3f milliseconds \n", milliseconds_3);
+    float milliseconds_4 = 0;
+    cudaEventElapsedTime(&milliseconds_4, t_34, stop);
+    printf("Memcpy (VRAM -> RAM) time is: %0.3f milliseconds \n", milliseconds_4);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
     printf("Total execution time is: %0.3f milliseconds \n", milliseconds);
@@ -220,8 +231,10 @@ int main(int argc, char *argv[])
     // Clean-up events
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
+    cudaEventDestroy(t_01);
     cudaEventDestroy(t_12);
     cudaEventDestroy(t_23);
+    cudaEventDestroy(t_34);
 
     // Free host memory
     free(h_imageIn);

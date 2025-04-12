@@ -160,7 +160,6 @@ int main(int argc, char *argv[]) {
     unsigned char *d_imageIn, *d_imageOut;
     cudaMalloc(&d_imageIn, dataSize);
     cudaMalloc(&d_imageOut, dataSize);
-    checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, dataSize, cudaMemcpyHostToDevice));
 
     dim3 blockSize(16, 16);
     dim3 gridSize((width + 15) / 16, (height + 15) / 16);
@@ -170,6 +169,7 @@ int main(int argc, char *argv[]) {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start);
+    checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, dataSize, cudaMemcpyHostToDevice));
 
     // Compute histogram using shared memory
     computeHistogramShared<<<gridSize, blockSize>>>(d_imageIn, width, height, cpp);

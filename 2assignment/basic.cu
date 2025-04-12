@@ -23,29 +23,29 @@
 __device__ int d_histogram[LUMINANCE_LEVELS];
 __device__ int d_histogramCumulative[LUMINANCE_LEVELS];
 
-__global__ void computeHistogram(const unsigned char *imageIn, unsigned char *imageOut, const int width, const int height, const int cpp)
+__global__ void computeHistogram(const unsigned char *imageIn, const int width, const int height, const int cpp)
 {
 
     // Get global indexes
     int gidx = blockDim.x * blockIdx.x + threadIdx.x;
     int gidy = blockDim.y * blockIdx.y + threadIdx.y;
-    if (gidx >= width || gidy >= height)
-        return;
     if (gidx == 0 & gidy == 0) {
         printf("DEVICE: Computing histogram\n");
     }
 
-    // Read RGB
-    float red   = (float) imageIn[(gidy * width + gidx) * cpp + 0];
-    float green = (float) imageIn[(gidy * width + gidx) * cpp + 1];
-    float blue  = (float) imageIn[(gidy * width + gidx) * cpp + 2];
+    if (gidx < width && gidy < height) {
+        // Read RGB
+        float red   = (float) imageIn[(gidy * width + gidx) * cpp + 0];
+        float green = (float) imageIn[(gidy * width + gidx) * cpp + 1];
+        float blue  = (float) imageIn[(gidy * width + gidx) * cpp + 2];
 
-    // RGB -> YUV
-    unsigned char Y = (unsigned char) (0.299 * red + 0.587 * green + 0.114 * blue + 0);
-    // unsigned char U = (unsigned char) ((-0.168736 * red) + (-0.331264 * green) + 0.5 * blue + 128);
-    // unsigned char V = (unsigned char) (0.5 * red + (-0.418688 * green) + (-0.081312 * blue) + 128);
+        // RGB -> YUV
+        unsigned char Y = (unsigned char) (0.299 * red + 0.587 * green + 0.114 * blue + 0);
+        // unsigned char U = (unsigned char) ((-0.168736 * red) + (-0.331264 * green) + 0.5 * blue + 128);
+        // unsigned char V = (unsigned char) (0.5 * red + (-0.418688 * green) + (-0.081312 * blue) + 128);
 
-    atomicAdd(&(d_histogram[Y]), 1);
+        atomicAdd(&(d_histogram[Y]), 1);
+    }
 
 }
 
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
     // Copy image to device and run kernel
     cudaEventRecord(start);
     checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, datasize, cudaMemcpyHostToDevice));
-    computeHistogram<<<gridSize_1, blockSize_1>>>(d_imageIn, d_imageOut, width, height, cpp);
+    computeHistogram<<<gridSize_1, blockSize_1>>>(d_imageIn, width, height, cpp);
     cudaEventRecord(t_12);
     cudaEventSynchronize(t_12);
     computeHistogramCumulative<<<gridSize_2, blockSize_2>>>(d_imageIn, d_imageOut, width, height, cpp);

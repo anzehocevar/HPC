@@ -12,6 +12,13 @@
 
 #define COLOR_CHANNELS 0
 
+#define BLOCK_SIZE_X_1 8
+#define BLOCK_SIZE_Y_1 8
+#define BLOCK_SIZE_X_2 32
+#define BLOCK_SIZE_Y_2 32
+#define BLOCK_SIZE_X_3 8
+#define BLOCK_SIZE_Y_3 8
+
 #define LUMINANCE_LEVELS 256
 __device__ int d_histogram[LUMINANCE_LEVELS];
 __device__ int d_histogramCumulative[LUMINANCE_LEVELS];
@@ -129,10 +136,14 @@ int main(int argc, char *argv[])
     unsigned char *h_imageOut = (unsigned char *)malloc(datasize);
 
     // Setup Thread organization
-    dim3 blockSize(16, 16);
-    // dim3 gridSize((height-1)/blockSize.x+1,(width-1)/blockSize.y+1);
-    dim3 gridSize((width-1)/blockSize.x+1,(height-1)/blockSize.y+1);
+    dim3 blockSize_1(BLOCK_SIZE_X_1, BLOCK_SIZE_Y_1);
+    // dim3 gridSize((height-1)/blockSize_1.x+1,(width-1)/blockSize_1.y+1);
+    dim3 gridSize_1((width-1)/blockSize_1.x+1,(height-1)/blockSize_1.y+1);
     //dim3 gridSize(1, 1);
+    dim3 blockSize_2(BLOCK_SIZE_X_2, BLOCK_SIZE_Y_2);
+    dim3 gridSize_2((width-1)/blockSize_2.x+1,(height-1)/blockSize_2.y+1);
+    dim3 blockSize_3(BLOCK_SIZE_X_3, BLOCK_SIZE_Y_3);
+    dim3 gridSize_3((width-1)/blockSize_3.x+1,(height-1)/blockSize_3.y+1);
 
     unsigned char *d_imageIn;
     unsigned char *d_imageOut;
@@ -144,16 +155,22 @@ int main(int argc, char *argv[])
     // CUDA MALLOC,..
 
     // Use CUDA events to measure execution time
-    cudaEvent_t start, stop;
+    cudaEvent_t start, stop, t_12, t_23;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
+    cudaEventCreate(&t_12);
+    cudaEventCreate(&t_23);
 
     // Copy image to device and run kernel
     cudaEventRecord(start);
     checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, datasize, cudaMemcpyHostToDevice));
-    computeHistogram<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
-    computeHistogramCumulative<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
-    computeNewLuminance<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
+    computeHistogram<<<gridSize_1, blockSize_1>>>(d_imageIn, d_imageOut, width, height, cpp);
+    cudaEventRecord(t_12);
+    cudaEventSynchronize(t_12);
+    computeHistogramCumulative<<<gridSize_2, blockSize_2>>>(d_imageIn, d_imageOut, width, height, cpp);
+    cudaEventRecord(t_23);
+    cudaEventSynchronize(t_23);
+    computeNewLuminance<<<gridSize_3, blockSize_3>>>(d_imageIn, d_imageOut, width, height, cpp);
     checkCudaErrors(cudaMemcpy(h_imageOut, d_imageOut, datasize, cudaMemcpyDeviceToHost));
     // cudaDeviceSynchronize();
     getLastCudaError("Kernel execution failed\n");
@@ -162,9 +179,18 @@ int main(int argc, char *argv[])
     cudaEventSynchronize(stop);
 
     // Print time
+    float milliseconds_1 = 0;
+    cudaEventElapsedTime(&milliseconds_1, start, t_12);
+    printf("Kernel 1 time is: %0.3f milliseconds \n", milliseconds_1);
+    float milliseconds_2 = 0;
+    cudaEventElapsedTime(&milliseconds_2, t_12, t_23);
+    printf("Kernel 2 time is: %0.3f milliseconds \n", milliseconds_2);
+    float milliseconds_3 = 0;
+    cudaEventElapsedTime(&milliseconds_3, t_23, stop);
+    printf("Kernel 3 time is: %0.3f milliseconds \n", milliseconds_3);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
-    printf("Kernel Execution time is: %0.3f milliseconds \n", milliseconds);
+    printf("Total execution time is: %0.3f milliseconds \n", milliseconds);
 
     // Write the output file
     char szImage_out_name_temp[255];

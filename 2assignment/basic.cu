@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
     if (argc < 3)
     {
-        printf("USAGE: sample input_image output_image\n");
+        printf("USAGE: %s input_image output_image\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 

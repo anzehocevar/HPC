@@ -143,7 +143,7 @@ __global__ void applyEqualization(unsigned char *imageIn, unsigned char *imageOu
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        printf("Usage: ./advanced_optimized input.png output.png\n");
+        printf("Usage: %s input.png output.png\n", argv[0]);
         return 1;
     }
 

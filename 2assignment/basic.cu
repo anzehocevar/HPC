@@ -40,6 +40,17 @@ __global__ void computeHistogram(const unsigned char *imageIn, unsigned char *im
 
     atomicAdd(&(d_histogram[Y]), 1);
 
+}
+
+__global__ void computeHistogramCumulative(const unsigned char *imageIn, unsigned char *imageOut, const int width, const int height, const int cpp) {
+    // Get global indexes
+    int gidx = blockDim.x * blockIdx.x + threadIdx.x;
+    int gidy = blockDim.y * blockIdx.y + threadIdx.y;
+    if (gidx >= width || gidy >= height)
+        return;
+    if (gidx == 0 & gidy == 0) {
+        printf("DEVICE: Computing cumulative histogram\n");
+    }
     if (gidx == 0 & gidy == 0) {
         d_histogramCumulative[0] = d_histogram[0];
         for (int i = 1; i < LUMINANCE_LEVELS; i++)
@@ -47,7 +58,6 @@ __global__ void computeHistogram(const unsigned char *imageIn, unsigned char *im
         // for (int i = 0; i < LUMINANCE_LEVELS; i++)
         //     printf("%d, ", d_histogramCumulative[i]);
     }
-
 }
 
 __global__ void computeNewLuminance(const unsigned char *imageIn, unsigned char *imageOut, const int width, const int height, const int cpp) {
@@ -142,6 +152,7 @@ int main(int argc, char *argv[])
     cudaEventRecord(start);
     checkCudaErrors(cudaMemcpy(d_imageIn, h_imageIn, datasize, cudaMemcpyHostToDevice));
     computeHistogram<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
+    computeHistogramCumulative<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
     computeNewLuminance<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
     checkCudaErrors(cudaMemcpy(h_imageOut, d_imageOut, datasize, cudaMemcpyDeviceToHost));
     // cudaDeviceSynchronize();

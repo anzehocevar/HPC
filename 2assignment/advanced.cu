@@ -161,8 +161,10 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&d_imageIn, dataSize);
     cudaMalloc(&d_imageOut, dataSize);
 
-    dim3 blockSize(16, 16);
-    dim3 gridSize((width + (blockSize.x-1)) / blockSize.x, (height + (blockSize.y-1)) / blockSize.y);
+    dim3 blockSize_1(16, 16);
+    dim3 gridSize_1((width + (blockSize_1.x-1)) / blockSize_1.x, (height + (blockSize_1.y-1)) / blockSize_1.y);
+    dim3 blockSize_4(16, 16);
+    dim3 gridSize_4((width + (blockSize_4.x-1)) / blockSize_4.x, (height + (blockSize_4.y-1)) / blockSize_4.y);
 
     // Start CUDA timing
     cudaEvent_t start, stop, t_01, t_12, t_23, t_34, t_45;
@@ -180,7 +182,7 @@ int main(int argc, char *argv[]) {
     cudaEventSynchronize(t_01);
 
     // Compute histogram using shared memory
-    computeHistogramShared<<<gridSize, blockSize>>>(d_imageIn, width, height, cpp);
+    computeHistogramShared<<<gridSize_1, blockSize_1>>>(d_imageIn, width, height, cpp);
     cudaEventRecord(t_12);
     cudaEventSynchronize(t_12);
     cudaDeviceSynchronize();
@@ -198,7 +200,7 @@ int main(int argc, char *argv[]) {
     cudaDeviceSynchronize();
 
     // Apply equalization using LUT
-    applyEqualization<<<gridSize, blockSize>>>(d_imageIn, d_imageOut, width, height, cpp);
+    applyEqualization<<<gridSize_4, blockSize_4>>>(d_imageIn, d_imageOut, width, height, cpp);
     cudaEventRecord(t_45);
     cudaEventSynchronize(t_45);
     cudaDeviceSynchronize();

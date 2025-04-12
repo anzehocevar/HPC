@@ -15,8 +15,8 @@
 
 #define BLOCK_SIZE_X_1 8
 #define BLOCK_SIZE_Y_1 8
-#define BLOCK_SIZE_X_2 32
-#define BLOCK_SIZE_Y_2 32
+// #define BLOCK_SIZE_X_2 32
+// #define BLOCK_SIZE_Y_2 32
 #define BLOCK_SIZE_X_3 8
 #define BLOCK_SIZE_Y_3 8
 
@@ -141,8 +141,8 @@ int main(int argc, char *argv[])
     // dim3 gridSize((height-1)/blockSize_1.x+1,(width-1)/blockSize_1.y+1);
     dim3 gridSize_1((width-1)/blockSize_1.x+1,(height-1)/blockSize_1.y+1);
     //dim3 gridSize(1, 1);
-    dim3 blockSize_2(BLOCK_SIZE_X_2, BLOCK_SIZE_Y_2);
-    dim3 gridSize_2((width-1)/blockSize_2.x+1,(height-1)/blockSize_2.y+1);
+    // dim3 blockSize_2(BLOCK_SIZE_X_2, BLOCK_SIZE_Y_2);
+    // dim3 gridSize_2((width-1)/blockSize_2.x+1,(height-1)/blockSize_2.y+1);
     dim3 blockSize_3(BLOCK_SIZE_X_3, BLOCK_SIZE_Y_3);
     dim3 gridSize_3((width-1)/blockSize_3.x+1,(height-1)/blockSize_3.y+1);
 
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
     computeHistogram<<<gridSize_1, blockSize_1>>>(d_imageIn, width, height, cpp);
     cudaEventRecord(t_12);
     cudaEventSynchronize(t_12);
-    computeHistogramCumulative<<<gridSize_2, blockSize_2>>>(width, height, cpp);
+    computeHistogramCumulative<<<1, 1>>>(width, height, cpp);
     cudaEventRecord(t_23);
     cudaEventSynchronize(t_23);
     computeNewLuminance<<<gridSize_3, blockSize_3>>>(d_imageIn, d_imageOut, width, height, cpp);

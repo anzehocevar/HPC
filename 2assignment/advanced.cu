@@ -234,6 +234,13 @@ int main(int argc, char *argv[]) {
     stbi_write_png(argv[2], width, height, cpp, h_imageOut, width * cpp);
 
     // Cleanup
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    cudaEventDestroy(t_01);
+    cudaEventDestroy(t_12);
+    cudaEventDestroy(t_23);
+    cudaEventDestroy(t_34);
+    cudaEventDestroy(t_45);
     cudaFree(d_imageIn);
     cudaFree(d_imageOut);
     stbi_image_free(h_imageIn);

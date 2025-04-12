@@ -117,9 +117,15 @@ int main(int argc, char *argv[])
 
     if (argc < 3)
     {
-        printf("USAGE: %s input_image output_image\n", argv[0]);
+        printf("USAGE: %s input_image output_image [block_size_x] [block_size_y]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+    int blockSizeX = 0;
+    if (argc > 3)
+        blockSizeX = atoi(argv[3]);
+    int blockSizeY = 0;
+    if (argc > 4)
+        blockSizeY = atoi(argv[4]);
 
     char szImage_in_name[255];
     char szImage_out_name[255];
@@ -141,13 +147,15 @@ int main(int argc, char *argv[])
     unsigned char *h_imageOut = (unsigned char *)malloc(datasize);
 
     // Setup Thread organization
-    dim3 blockSize_1(BLOCK_SIZE_X_1, BLOCK_SIZE_Y_1);
+    int blockSizeX_1 = (blockSizeX > 0) ? blockSizeX : BLOCK_SIZE_X_1;
+    int blockSizeY_1 = (blockSizeY > 0) ? blockSizeY : BLOCK_SIZE_Y_1;
+    dim3 blockSize_1(blockSizeX_1, blockSizeY_1);
     // dim3 gridSize((height-1)/blockSize_1.x+1,(width-1)/blockSize_1.y+1);
     dim3 gridSize_1((width-1)/blockSize_1.x+1,(height-1)/blockSize_1.y+1);
     //dim3 gridSize(1, 1);
-    // dim3 blockSize_2(BLOCK_SIZE_X_2, BLOCK_SIZE_Y_2);
-    // dim3 gridSize_2((width-1)/blockSize_2.x+1,(height-1)/blockSize_2.y+1);
-    dim3 blockSize_3(BLOCK_SIZE_X_3, BLOCK_SIZE_Y_3);
+    int blockSizeX_3 = (blockSizeX > 0) ? blockSizeX : BLOCK_SIZE_X_3;
+    int blockSizeY_3 = (blockSizeY > 0) ? blockSizeY : BLOCK_SIZE_Y_3;
+    dim3 blockSize_3(blockSizeX_3, blockSizeY_3);
     dim3 gridSize_3((width-1)/blockSize_3.x+1,(height-1)/blockSize_3.y+1);
 
     unsigned char *d_imageIn;

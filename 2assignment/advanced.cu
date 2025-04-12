@@ -14,6 +14,11 @@
 #define COLOR_CHANNELS 0
 #define LUMINANCE_LEVELS 256
 
+#define BLOCK_SIZE_X_1 32
+#define BLOCK_SIZE_Y_1 32
+#define BLOCK_SIZE_X_4 16
+#define BLOCK_SIZE_Y_4 16
+
 // Global device-managed memory for histogram, cumulative distribution function (cdf), and lookup table (lut)
 __device__ __managed__ int d_histogram[LUMINANCE_LEVELS];
 __device__ __managed__ int d_cdf[LUMINANCE_LEVELS];
@@ -161,9 +166,9 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&d_imageIn, dataSize);
     cudaMalloc(&d_imageOut, dataSize);
 
-    dim3 blockSize_1(16, 16);
+    dim3 blockSize_1(BLOCK_SIZE_X_1, BLOCK_SIZE_Y_1);
     dim3 gridSize_1((width + (blockSize_1.x-1)) / blockSize_1.x, (height + (blockSize_1.y-1)) / blockSize_1.y);
-    dim3 blockSize_4(16, 16);
+    dim3 blockSize_4(BLOCK_SIZE_X_4, BLOCK_SIZE_Y_4);
     dim3 gridSize_4((width + (blockSize_4.x-1)) / blockSize_4.x, (height + (blockSize_4.y-1)) / blockSize_4.y);
 
     // Start CUDA timing

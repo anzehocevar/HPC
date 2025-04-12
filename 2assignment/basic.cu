@@ -220,6 +220,8 @@ int main(int argc, char *argv[])
     // Clean-up events
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
+    cudaEventDestroy(t_12);
+    cudaEventDestroy(t_23);
 
     // Free host memory
     free(h_imageIn);

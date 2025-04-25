@@ -1,0 +1,94 @@
+sistem differencialnih enacb
+
+
+U + 2V -> 3V
+
+F - umetno dovajamo U (konstanta F s katero reguliramo pritok) (feed rate)
+
+k - kako hitro odvzemamo V iz sistema (kill rate)
+
+Du = 2d odvod (koeficinenta difuzije) (razlivanje)
+
+diskretiziramo po casu in prostoru (2d ravnini) (na sliki okoli 5000 iteracij + odvisno od koeficinetov):
+
+aproximiramo z Laplcianom (sosednje celice)
+
+definiramo casovni korak (deluje lepo tudi pri t = 1)
+
+U pa V sta posebej definirani
+vedno uporabi stare vrednosti za racunanje nove mreze
+
+(v pseudokodi pise da ze posodabljamo)
+(ne kopiramo vedno nove tabele, samo spreminjamo ponor iz izvor (pointerje zamenjamo med tabelami))
+
+na robu mreze:
+gremo na drugo stran mreze
+
+zacetno stanje mreze:
+na sredino nastavmio U na 0.75, V na 0.25 (napisano v navodilih)
+
+
+
+
+Paralelizacija:
+nove U pa V uporabimo kot novi pixel (usaka celica en thread)
+umes synchorniziras (novi kernel)
+
+na koncu vizualiziramo
+
+
+
+Visje ocene:
++ deljeni pomnilnik pri sosedih (niti dostopajo do istih vrednosti)
+(se splaca ker imamo 2D sosescino, in veckrat dostopamo do istih celic)
+(+ zaradi lokalnosti; ampak y+1 in y-1 vrednosti so lahko zelo dalec v pomnilniku, 
+zato uporabimo deljeni pomnilnik)
+
++ preizkusiti velikosti blokov
+
++ na vec graficnih enot 
+
+do 13.5
+
+
+do 1.6:
+HPC Challange (samostojno):
+
+nadgradnja domace:
+model razsirimo v 3D
+nujno potrebno razsiriti na 2 graficno kartici
+
+lahko uporabimo openMP in openMPI
+
+main.c ne oddajamo, makefile lahko spreminjamo, 
+implementiramo gray_scott.cu (spremenimo po svoje initUV in grau_scott3D)
+
+mora vrnit povprecno koncentracijo V
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -33,7 +33,7 @@ void initUV2D(float *U, float *V, int size) {
 
 double gray_scott2D(gs_config config){
     // Initialize vars from .h
-    int grid_size = config.n;
+    int size = config.n;
     int iterations = config.steps;
     float dt = config.dt;
     float du = config.du;
@@ -59,29 +59,29 @@ double gray_scott2D(gs_config config){
     for(int it = 0;it < iterations; it++){
         // Update U and V using the Gray-Scott model
         #pragma omp parallel for collapse(2)
-        for(int i = 0;i < grid_size; i++){
-            for(int j = 0;j < grid_size;j++){
+        for(int i = 0;i < size; i++){
+            for(int j = 0;j < size;j++){
                 // Get the indices of the neighbors
-                int up = (i - 1 + grid_size) % grid_size;
-                int down = (i + 1) % grid_size;
-                int left = (j - 1 + grid_size) % grid_size;
-                int right = (j + 1) % grid_size;
+                int up = (i - 1 + size) % size;
+                int down = (i + 1) % size;
+                int left = (j - 1 + size) % size;
+                int right = (j + 1) % size;
 
                 // Compute the Laplacian
-                float laplacian_U = U[IDX(up, j, grid_size)] + U[IDX(down, j, grid_size)] +
-                                    U[IDX(i, left, grid_size)] + U[IDX(i, right, grid_size)] -
-                                    4 * U[IDX(i, j, grid_size)];
+                float laplacian_U = U[IDX(up, j, size)] + U[IDX(down, j, size)] +
+                                    U[IDX(i, left, size)] + U[IDX(i, right, size)] -
+                                    4 * U[IDX(i, j, size)];
 
-                float laplacian_V = V[IDX(up, j, grid_size)] + V[IDX(down, j, grid_size)] +
-                                    V[IDX(i, left, grid_size)] + V[IDX(i, right, grid_size)] -
-                                    4 * V[IDX(i, j, grid_size)];
+                float laplacian_V = V[IDX(up, j, size)] + V[IDX(down, j, size)] +
+                                    V[IDX(i, left, size)] + V[IDX(i, right, size)] -
+                                    4 * V[IDX(i, j, size)];
 
                 // Update U and V
-                U_next[IDX(i, j, grid_size)] = U[IDX(i, j, grid_size)] +
-                                                dt * (du * laplacian_U - U[IDX(i, j, grid_size)] * V[IDX(i, j, grid_size)] * V[IDX(i, j, grid_size)] +
-                                                f * (1 - U[IDX(i, j, grid_size)]));
+                U_next[IDX(i, j, size)] = U[IDX(i, j, size)] +
+                                                dt * (du * laplacian_U - U[IDX(i, j, size)] * V[IDX(i, j, size)] * V[IDX(i, j, size)] +
+                                                f * (1 - U[IDX(i, j, size)]));
 
-                V_next[IDX(i, j, grid_size)] = V[IDX(i, j, grid_size)] +
+                V_next[IDX(i, j, size)] = V[IDX(i, j, size)] +
                                                 dt * (dv * laplacian_V + U[IDX(i,j,size)] * V[IDX(i,j,size)] * V[IDX(i,j,size)] -
                                                 (f + k) * V[IDX(i,j,size)]);
             }

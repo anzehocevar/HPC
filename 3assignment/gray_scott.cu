@@ -8,9 +8,32 @@
 // Helper macro to access 2D grid
 #define IDX(i, j, size) ((i) * (size) + (j))
 
+// visualize
+void write_pgm(const char *filename, float *V, int size) {
+    FILE *f = fopen(filename, "w");
+    if (!f) {
+        perror("Failed to open file for PGM output");
+        return;
+    }
+
+    fprintf(f, "P2\n%d %d\n255\n", size, size);  // P2 = ASCII grayscale
+
+    for (int i = 0; i < size * size; i++) {
+        int gray = (int)(255.0f * V[i]);  // scale V in [0,1] to [0,255]
+        if (gray > 255) gray = 255;
+        else if (gray < 0) gray = 0;
+
+        fprintf(f, "%d ", gray);
+        if ((i + 1) % size == 0)
+            fprintf(f, "\n");
+    }
+
+    fclose(f);
+}
+
+
+
 // Reference function for initialization of U and V
-
-
 void initUV2D(float *U, float *V, int size) {
     // Set initial values: U=1.0, V=0.0
     for (int i = 0; i < size; i++) {
@@ -24,7 +47,7 @@ void initUV2D(float *U, float *V, int size) {
     int r = size / 8;
     for (int i = size / 2 - r; i < size / 2 + r; i++) {
         for (int j = size / 2 - r; j < size / 2 + r; j++) {
-            U[IDX(i, j, size)] = 0.50f;
+            U[IDX(i, j, size)] = 0.75f;
             V[IDX(i, j, size)] = 0.25f;
         }
     }
@@ -110,6 +133,9 @@ double gray_scott2D(gs_config config){
     free(V);
     free(U_next);
     free(V_next);
+
+    // Write the final state to a PGM file
+    write_pgm("output.pgm", V, size);
 
     return avgV;
 }

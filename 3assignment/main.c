@@ -22,9 +22,11 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank == 0)
         printf("Benchmark\t   N\tSteps\tMean V\t Time\n");
-    gs_config config1 = {.n = 128, .steps = 2000, .dt = 1, .du = 0.04, .dv = 0.02, .f = 0.02, .k = 0.048};
-    benchmark(1, rank, config1);
     // For this configuration, the the average concentration of V is 0.11917.
+    // gs_config config1 = {.n = 128, .steps = 2000, .dt = 1, .du = 0.04, .dv = 0.02, .f = 0.02, .k = 0.048};
+    // configuration from instructions
+    gs_config config1 = {.n = 128, .steps = 5000, .dt = 1, .du = 0.16, .dv = 0.08, .f = 0.06, .k = 0.062};
+    benchmark(1, rank, config1);
     MPI_Finalize();
     return 0;
 }

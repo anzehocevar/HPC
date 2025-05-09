@@ -2,7 +2,7 @@
 #SBATCH --job-name=gray_scott_sim
 #SBATCH --output=slurm_logs/gray_scott_%j.out
 #SBATCH --error=slurm_logs/gray_scott_%j.err
-#SBATCH --ntasks=4                   # Total MPI processes
+#SBATCH --ntasks=1                   # Total MPI processes
 #SBATCH --cpus-per-task=4            # Threads per process (OpenMP)
 #SBATCH --gres=gpu:1                 
 #SBATCH --time=00:30:00              

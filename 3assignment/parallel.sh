@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=parallel_gray_scott_sim
-#SBATCH --output=slurm_logs/gray_scott_%j.out
-#SBATCH --error=slurm_logs/gray_scott_%j.err
-#SBATCH --ntasks=4                   # Total MPI processes
+#SBATCH --output=slurm_logs/par_gray_scott_%j.out
+#SBATCH --error=slurm_logs/par_gray_scott_%j.err
+#SBATCH --ntasks=1                   # Total MPI processes
 #SBATCH --cpus-per-task=4           # OpenMP threads per process
 #SBATCH --gres=gpu:1
 #SBATCH --time=00:30:00
@@ -17,7 +17,8 @@ module load OpenMPI
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 # Compile CUDA + OpenMP + MPI
-nvcc -Xcompiler -fopenmp -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
+nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
+
 
 # Example arguments:
 #   grid_size iterations blockSizeX blockSizeY dt du dv f k

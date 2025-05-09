@@ -16,7 +16,7 @@ module load GCC
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 # Compile (adjust for MPI + OpenMP + CUDA)
-nvcc -Xcompiler -fopenmp -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
+nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
 
 # Run the simulation with MPI
 mpirun -np $SLURM_NTASKS ./gray_scott

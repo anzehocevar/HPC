@@ -8,27 +8,43 @@
 // Helper macro to access 2D grid
 #define IDX(i, j, size) ((i) * (size) + (j))
 
-// visualize
-void write_pgm(const char *filename, float *V, int size) {
-    FILE *f = fopen(filename, "w");
-    if (!f) {
-        perror("Failed to open file for PGM output");
-        return;
-    }
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_image_write.h"
 
-    fprintf(f, "P2\n%d %d\n255\n", size, size);  // P2 = ASCII grayscale
+
+// visualize
+void colormap(float value, unsigned char *r, unsigned char *g, unsigned char *b) {
+    float x = fminf(fmaxf(value, 0.0f), 1.0f);
+    *r = (unsigned char)(9*(1-x)*x*x*x*255);
+    *g = (unsigned char)(15*(1-x)*(1-x)*x*x*255);
+    *b = (unsigned char)(8.5*(1-x)*(1-x)*(1-x)*x*255);
+}
+
+void write_png(const char *filename, float *V, int size) {
+    unsigned char *image = (unsigned char *)malloc(size * size * 3);
+
+    float minV = V[0], maxV = V[0];
+    for (int i = 1; i < size * size; i++) {
+        if (V[i] < minV) minV = V[i];
+        if (V[i] > maxV) maxV = V[i];
+    }
+    float range = maxV - minV;
+    if (range < 1e-6f) range = 1.0f;
 
     for (int i = 0; i < size * size; i++) {
-        int gray = (int)(255.0f * V[i]);  // scale V in [0,1] to [0,255]
-        if (gray > 255) gray = 255;
-        else if (gray < 0) gray = 0;
-
-        fprintf(f, "%d ", gray);
-        if ((i + 1) % size == 0)
-            fprintf(f, "\n");
+        float norm = (V[i] - minV) / range;
+        unsigned char r, g, b;
+        colormap(norm, &r, &g, &b);
+        image[i * 3 + 0] = r;
+        image[i * 3 + 1] = g;
+        image[i * 3 + 2] = b;
     }
 
-    fclose(f);
+    stbi_write_png_compression_level = 9;
+    stbi_write_png(filename, size, size, 3, image, size * 3);
+    free(image);
 }
 
 
@@ -128,14 +144,15 @@ double gray_scott2D(gs_config config){
     }
     avgV /= (size * size);
 
+    // Write output to file
+    write_png("output.png", V, size);
+
     // Cleanup
     free(U);
     free(V);
     free(U_next);
     free(V_next);
 
-    // Write the final state to a PGM file
-    write_pgm("output.pgm", V, size);
 
     return avgV;
 }

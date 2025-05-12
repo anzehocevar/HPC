@@ -14,13 +14,76 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
-
+#define BLOCK_SIZE_X 16
+#define BLOCK_SIZE_Y 16
 
 // Helper macro to access 2D grid
 #define IDX(i, j, size) ((i) * (size) + (j))
 
 __global__ void dummyKernel() {
     // empty warm-up kernel
+}
+
+__global__ void gray_scott_kernel_1(
+    float *U, float *V, float *U_next, float *V_next,
+    int size, float dt, float du, float dv, float f, float k) {
+
+    __shared__ float s_U[1 + BLOCK_SIZE_Y + 1][1 + BLOCK_SIZE_X + 1];
+    __shared__ float s_V[1 + BLOCK_SIZE_Y + 1][1 + BLOCK_SIZE_X + 1];
+
+    // Get global thread indices
+    int i = blockIdx.y * blockDim.y + threadIdx.y;
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i >= size || j >= size) return;
+
+    int up    = (i - 1 + size) % size;
+    int down  = (i + 1) % size;
+    int left  = (j - 1 + size) % size;
+    int right = (j + 1) % size;
+
+    int idx       = i * size + j;
+    int idx_up    = up * size + j;
+    int idx_down  = down * size + j;
+    int idx_left  = i * size + left;
+    int idx_right = i * size + right;
+
+    int s_y = threadIdx.y + 1;
+    int s_x = threadIdx.x + 1;
+
+    s_U[s_y][s_x] = U[idx];
+    s_V[s_y][s_x] = V[idx];
+
+    if (threadIdx.x == 0) {
+        s_U[s_y][0] = U[idx_left];
+        s_V[s_y][0] = V[idx_left];
+    }
+    if (threadIdx.y == 0) {
+        s_U[0][s_x] = U[idx_up];
+        s_V[0][s_x] = V[idx_up];
+    }
+    if (threadIdx.x >= blockDim.x - 1) {
+        s_U[s_y][blockDim.x + 1] = U[idx_right];
+        s_V[s_y][blockDim.x + 1] = V[idx_right];
+    }
+    if (threadIdx.y >= blockDim.y - 1) {
+        s_U[blockDim.y + 1][s_x] = U[idx_down];
+        s_V[blockDim.y + 1][s_x] = V[idx_down];
+    }
+
+    float u = s_U[s_y][s_x];
+    float v = s_V[s_y][s_x];
+
+    __syncthreads();
+
+    float lap_u = s_U[s_y-1][s_x] + s_U[s_y+1][s_x] + s_U[s_y][s_x-1] + s_U[s_y][s_x+1] - 4 * u;
+    float lap_v = s_V[s_y-1][s_x] + s_V[s_y+1][s_x] + s_V[s_y][s_x-1] + s_V[s_y][s_x+1] - 4 * v;
+
+    float uv2 = u * v * v;
+
+    U_next[idx] = u + dt * (du * lap_u - uv2 + f * (1.0f - u));
+    V_next[idx] = v + dt * (dv * lap_v + uv2 - (f + k) * v);
+
 }
 
 __global__ void gray_scott_kernel(
@@ -141,7 +204,7 @@ double gray_scott2D(gs_config config){
     cudaMemcpy(d_V, V, size * size * sizeof(float), cudaMemcpyHostToDevice);
 
     // Define block and grid sizes
-    dim3 blockSize(16, 16);
+    dim3 blockSize(BLOCK_SIZE_X, BLOCK_SIZE_Y);
     dim3 gridSize((size + blockSize.x - 1) / blockSize.x, (size + blockSize.y - 1) / blockSize.y);
     // Warm-up GPU
     dummyKernel<<<1, 1>>>();
@@ -151,7 +214,7 @@ double gray_scott2D(gs_config config){
     // Main loop
     for (int t = 0; t < iterations; t++) {
         // Launch kernel
-        gray_scott_kernel<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
+        gray_scott_kernel_1<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
         // Synchronize device
         cudaDeviceSynchronize();
         // Swap pointers

@@ -15,15 +15,21 @@ module load GCC
 # Set OpenMP threads
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
-# Compile (adjust for MPI + OpenMP + CUDA)
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+# Compile once
 nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
 
-echo "version,grid_size,block_x,block_y,time" > timings.csv
+echo "mode,grid_size,block_size,init_time,compute_time,avgV" > timings_sequential.csv
 
-# Sequential timings
-for N in 256 512 1024 2048 4096; do
-    sed -i "s/\.n = [0-9]*/.n = $N/" main.c
-    nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
-    T=$(mpirun -np $SLURM_NTASKS ./gray_scott | grep -Eo '[0-9]+\.[0-9]+$')
-    echo "sequential,$N,0,0,$T" >> timings_sequential.csv
+# 512 1024 2048 4096
+for N in 256; do
+    echo "Running N=$N"
+    output=$(mpirun -np $SLURM_NTASKS ./gray_scott $N)
+
+    init_time=$(echo "$output" | grep Init_time | cut -d ':' -f2)
+    compute_time=$(echo "$output" | grep Compute_time | cut -d ':' -f2)
+    avgV=$(echo "$output" | grep "Average concentration of V" | awk '{print $5}')
+
+    echo "sequential,$N,0,$init_time,$compute_time,$avgV" >> timings_sequential.csv
 done

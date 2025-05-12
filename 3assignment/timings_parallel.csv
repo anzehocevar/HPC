@@ -1,2 +1,2 @@
 mode,grid_size,block_size,init_time,compute_time,avgV
-sequential,256,0,0.000458,4.793706,0.067432
+parallel,256,8,0.000031,0.023576,0.067432

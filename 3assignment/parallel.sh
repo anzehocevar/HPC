@@ -21,18 +21,23 @@ nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gr
 
 
 # Example arguments:
-#   grid_size iterations blockSizeX blockSizeY dt du dv f k
-ARGS="128 5000 16 16 1.0 0.16 0.08 0.06 0.062"
+#   grid_size iterations block_size dt du dv f k
+ARGS="256 5000 16 1.0 0.16 0.08 0.06 0.062"
 
 # Run the simulation
 # mpirun -np $SLURM_NTASKS ./par_gray_scott $ARGS
 
-# Parallel timings
-for N in 256 512 1024 2048 4096; do
-  for BX in 8 16 32; do
-    BY=$BX
-    ARGS="$N 5000 $BX $BY 1.0 0.16 0.08 0.06 0.062"
-    T=$(mpirun -np $SLURM_NTASKS ./par_gray_scott $ARGS | grep -Eo '[0-9]+\.[0-9]+$')
-    echo "parallel,$N,$BX,$BY,$T" >> timings_parallel.csv
+echo "mode,grid_size,block_size,init_time,compute_time,avgV" > timings_parallel.csv
+
+# for N in 256 512 1024 2048; do
+#   for B in 8 16 32; do
+for N in 256; do
+  for B in 8; do
+    echo "Running: N=$N, B=$B"
+    output=$(mpirun -np $SLURM_NTASKS ./par_gray_scott $N 5000 $B 1.0 0.16 0.08 0.06 0.062)
+    init_time=$(echo "$output" | grep Init_time | cut -d ':' -f2)
+    compute_time=$(echo "$output" | grep Compute_time | cut -d ':' -f2)
+    avgV=$(echo "$output" | grep "Average concentration of V" | awk '{print $5}')
+    echo "parallel,$N,$B,$init_time,$compute_time,$avgV" >> timings_parallel.csv
   done
 done

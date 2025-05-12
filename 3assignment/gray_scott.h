@@ -15,7 +15,6 @@ extern "C"
         float dv;  // diffusion rate for v
         float f;   // feed rate
         float k;   // kill rate
-
     } gs_config;
 
     double gray_scott2D(gs_config config);

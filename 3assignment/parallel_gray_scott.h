@@ -15,7 +15,7 @@ extern "C"
         float dv;  // diffusion rate for v
         float f;   // feed rate
         float k;   // kill rate
-
+        int block_size; // size of the blocks for parallelization
     } gs_config;
 
     double gray_scott2D(gs_config config);

@@ -4,29 +4,30 @@
 #include <mpi.h>
 #include "gray_scott.h"
 
-int benchmark(int case_id, int rank, gs_config config)
-{
-    double start = omp_get_wtime();
-    double meanV = gray_scott2D(config);
-    double stop = omp_get_wtime();
-    double time = stop - start;
-    if (rank == 0)
-        printf("%9d\t%4d\t%5d\t%.4f\t%.3f\n", case_id, config.n, config.steps, meanV, time);
-    return 0;
-}
+int main(int argc, char **argv){
+    if (argc < 2) {
+        fprintf(stderr, "USAGE: %s grid_size\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
-int main(int argc, char **argv)
-{
     MPI_Init(&argc, &argv);
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank == 0)
-        printf("Benchmark\t   N\tSteps\tMean V\t Time\n");
-    // For this configuration, the the average concentration of V is 0.11917.
-    // gs_config config1 = {.n = 128, .steps = 2000, .dt = 1, .du = 0.04, .dv = 0.02, .f = 0.02, .k = 0.048};
-    // configuration from instructions
-    gs_config config1 = {.n = 128, .steps = 5000, .dt = 1, .du = 0.16, .dv = 0.08, .f = 0.06, .k = 0.062};
-    benchmark(1, rank, config1);
+
+    int grid_size = atoi(argv[1]);
+
+    gs_config config1 = {
+        .n = grid_size,
+        .steps = 5000,
+        .dt = 1.0f,
+        .du = 0.16f,
+        .dv = 0.08f,
+        .f  = 0.06f,
+        .k  = 0.062f
+    };
+
+    double avgV = gray_scott2D(config1);
+
     MPI_Finalize();
     return 0;
 }

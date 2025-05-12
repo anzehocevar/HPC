@@ -3,7 +3,7 @@
 #include <math.h>
 #include <omp.h>
 #include <mpi.h>
-#include "gray_scott.h"
+#include "parallel_gray_scott.h"
 
 #include <cuda_runtime.h>
 #include <cuda.h>
@@ -55,22 +55,40 @@ __global__ void gray_scott_kernel(
 }
 
 // Reference function for initialization of U and V
-void initUV2D(float *U, float *V, int size) {
-    // Set initial values: U=1.0, V=0.0
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            U[IDX(i, j, size)] = 1.0f;
-            V[IDX(i, j, size)] = 0.0f;
-        }
-    }
+// void initUV2D(float *U, float *V, int size) {
+//     // Set initial values: U=1.0, V=0.0
+//     for (int i = 0; i < size; i++) {
+//         for (int j = 0; j < size; j++) {
+//             U[IDX(i, j, size)] = 1.0f;
+//             V[IDX(i, j, size)] = 0.0f;
+//         }
+//     }
 
-    // Seed a small square in the center
+//     // Seed a small square in the center
+//     int r = size / 8;
+//     for (int i = size / 2 - r; i < size / 2 + r; i++) {
+//         for (int j = size / 2 - r; j < size / 2 + r; j++) {
+//             U[IDX(i, j, size)] = 0.75f;
+//             V[IDX(i, j, size)] = 0.25f;
+//         }
+//     }
+// }
+
+// Parallelized 
+__global__ void initUV2D_kernel(float *U, float *V, int size) {
+    int i = blockIdx.y * blockDim.y + threadIdx.y;
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= size || j >= size) return;
+
+    int idx = IDX(i, j, size);
+    U[idx] = 1.0f;
+    V[idx] = 0.0f;
+
     int r = size / 8;
-    for (int i = size / 2 - r; i < size / 2 + r; i++) {
-        for (int j = size / 2 - r; j < size / 2 + r; j++) {
-            U[IDX(i, j, size)] = 0.75f;
-            V[IDX(i, j, size)] = 0.25f;
-        }
+    if (i >= size / 2 - r && i < size / 2 + r &&
+        j >= size / 2 - r && j < size / 2 + r) {
+        U[idx] = 0.75f;
+        V[idx] = 0.25f;
     }
 }
 
@@ -108,7 +126,7 @@ void write_png(const char *filename, float *V, int size) {
 }
 
 
-double gray_scott2D(gs_config config){
+double gray_scott2D(gs_config config) {
     // Initialize vars from .h
     int size = config.n;
     int iterations = config.steps;
@@ -117,43 +135,40 @@ double gray_scott2D(gs_config config){
     float dv = config.dv;
     float f = config.f;
     float k = config.k;
+    int block_size = config.block_size;
 
-    // Allocate memory
+    // Host memory allocation
     float *U = (float *)malloc(size * size * sizeof(float));
     float *V = (float *)malloc(size * size * sizeof(float));
-    float *U_next = (float *)malloc(size * size * sizeof(float));
-    float *V_next = (float *)malloc(size * size * sizeof(float));
 
-    
-    // Initialize U and V
-    initUV2D(U, V, size);
-
-    // Allocate device memory
+    // allocate device memory
     float *d_U, *d_V, *d_U_next, *d_V_next;
     cudaMalloc((void **)&d_U, size * size * sizeof(float));
     cudaMalloc((void **)&d_V, size * size * sizeof(float));
-
     cudaMalloc((void **)&d_U_next, size * size * sizeof(float));
     cudaMalloc((void **)&d_V_next, size * size * sizeof(float));
 
-    // Copy initial data to device
-    cudaMemcpy(d_U, U, size * size * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_V, V, size * size * sizeof(float), cudaMemcpyHostToDevice);
+    dim3 block(block_size, block_size);
+    dim3 grid((size + block.x - 1) / block.x, (size + block.y - 1) / block.y);
 
-    // Define block and grid sizes
-    dim3 blockSize(16, 16);
-    dim3 gridSize((size + blockSize.x - 1) / blockSize.x, (size + blockSize.y - 1) / blockSize.y);
-    // Warm-up GPU
+    // Warm-up kernel
     dummyKernel<<<1, 1>>>();
     cudaDeviceSynchronize();
+
+    // Initialize U and V on the device
+    double init_start = MPI_Wtime();
+    initUV2D_kernel<<<grid, block>>>(d_U, d_V, size);
+    cudaDeviceSynchronize();
+    double init_end = MPI_Wtime();
+
     // Start the timer
     double start = MPI_Wtime();
+
     // Main loop
     for (int t = 0; t < iterations; t++) {
         // Launch kernel
-        gray_scott_kernel<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
-        // Synchronize device
-        cudaDeviceSynchronize();
+        gray_scott_kernel<<<grid, block>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
+
         // Swap pointers
         float *temp_U = d_U;
         d_U = d_U_next;
@@ -163,28 +178,25 @@ double gray_scott2D(gs_config config){
         d_V = d_V_next;
         d_V_next = temp_V;
     }
+    // Synchronize device
+    cudaDeviceSynchronize();
+
     // Copy result back to host
-    cudaMemcpy(U, d_U, size * size * sizeof(float), cudaMemcpyDeviceToHost);
+    // cudaMemcpy(U, d_U, size * size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(V, d_V, size * size * sizeof(float), cudaMemcpyDeviceToHost);
+
     // Stop the timer
     double end = MPI_Wtime();
-    double elapsed = end - start;
-    printf("Elapsed time: %f seconds\n", elapsed);
-    // Print average concentration of U
-    double avgU = 0.0;
-    for (int i = 0; i < size * size; i++) {
-        avgU += U[i];
-    }
-    avgU /= (size * size);
-    printf("Average concentration of U: %f\n", avgU);
+    printf("Init_time:%.6f\nCompute_time:%.6f\n", init_end - init_start, end - start);
+
     // Print average concentration of V
     double avgV = 0.0;
     for (int i = 0; i < size * size; i++) {
         avgV += V[i];
     }
     avgV /= (size * size);
-    printf("Average concentration of V: %f\n", avgV);
-
+    printf("Average concentration of V: %.6f\n", avgV);
+    
     // Write output to file
     write_png("output.png", V, size);
     
@@ -197,9 +209,6 @@ double gray_scott2D(gs_config config){
     // Free host memory
     free(U);
     free(V);
-    free(U_next);
-    free(V_next);
-
 
     return avgV;
 }

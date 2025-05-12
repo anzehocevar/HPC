@@ -70,8 +70,7 @@ void initUV2D(float *U, float *V, int size) {
 }
 
 
-double gray_scott2D(gs_config config){
-    // Initialize vars from .h
+double gray_scott2D(gs_config config) {
     int size = config.n;
     int iterations = config.steps;
     float dt = config.dt;
@@ -80,79 +79,77 @@ double gray_scott2D(gs_config config){
     float f = config.f;
     float k = config.k;
 
-    // Allocate memory
+    // Allocate
     float *U = (float *)malloc(size * size * sizeof(float));
     float *V = (float *)malloc(size * size * sizeof(float));
     float *U_next = (float *)malloc(size * size * sizeof(float));
     float *V_next = (float *)malloc(size * size * sizeof(float));
 
-    
-    // Initialize U and V
-    initUV2D(U, V, size);
+    // Init time measurement
+    double init_start = MPI_Wtime();
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            int idx = i * size + j;
+            U[idx] = 1.0f;
+            V[idx] = 0.0f;
+        }
+    }
 
-    /*
-    YOUR SOLUTION GOES HERE
-    Write a 2D Gray-Scott simulation in C/C++ using CUDA, OpenMPI, and OpenMP.
-    */
+    int r = size / 8;
+    for (int i = size / 2 - r; i < size / 2 + r; i++) {
+        for (int j = size / 2 - r; j < size / 2 + r; j++) {
+            int idx = i * size + j;
+            U[idx] = 0.75f;
+            V[idx] = 0.25f;
+        }
+    }
+    double init_end = MPI_Wtime();
 
-    for(int it = 0;it < iterations; it++){
-        // Update U and V using the Gray-Scott model
-        #pragma omp parallel for collapse(2)
-        for(int i = 0;i < size; i++){
-            for(int j = 0;j < size;j++){
-                // Get the indices of the neighbors
-                int up = (i - 1 + size) % size;
-                int down = (i + 1) % size;
-                int left = (j - 1 + size) % size;
+    // Simulation loop timing
+    double sim_start = MPI_Wtime();
+    for (int t = 0; t < iterations; t++) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                int idx = i * size + j;
+                int up    = (i - 1 + size) % size;
+                int down  = (i + 1) % size;
+                int left  = (j - 1 + size) % size;
                 int right = (j + 1) % size;
 
-                // Compute the Laplacian
-                float laplacian_U = U[IDX(up, j, size)] + U[IDX(down, j, size)] +
-                                    U[IDX(i, left, size)] + U[IDX(i, right, size)] -
-                                    4 * U[IDX(i, j, size)];
+                float lap_u = U[up * size + j] + U[down * size + j] +
+                              U[i * size + left] + U[i * size + right] - 4 * U[idx];
 
-                float laplacian_V = V[IDX(up, j, size)] + V[IDX(down, j, size)] +
-                                    V[IDX(i, left, size)] + V[IDX(i, right, size)] -
-                                    4 * V[IDX(i, j, size)];
+                float lap_v = V[up * size + j] + V[down * size + j] +
+                              V[i * size + left] + V[i * size + right] - 4 * V[idx];
 
-                // Update U and V
-                U_next[IDX(i, j, size)] = U[IDX(i, j, size)] +
-                                                dt * (du * laplacian_U - U[IDX(i, j, size)] * V[IDX(i, j, size)] * V[IDX(i, j, size)] +
-                                                f * (1 - U[IDX(i, j, size)]));
-
-                V_next[IDX(i, j, size)] = V[IDX(i, j, size)] +
-                                                dt * (dv * laplacian_V + U[IDX(i,j,size)] * V[IDX(i,j,size)] * V[IDX(i,j,size)] -
-                                                (f + k) * V[IDX(i,j,size)]);
+                U_next[idx] = U[idx] + dt * (du * lap_u - U[idx] * V[idx] * V[idx] + f * (1.0f - U[idx]));
+                V_next[idx] = V[idx] + dt * (dv * lap_v + U[idx] * V[idx] * V[idx] - (f + k) * V[idx]);
             }
         }
 
-        // Swap pointers
-        float *temp = U;
-        U = U_next;
-        U_next = temp;
-
-        temp = V;
-        V = V_next;
-        V_next = temp;
+        float *tmp_u = U; U = U_next; U_next = tmp_u;
+        float *tmp_v = V; V = V_next; V_next = tmp_v;
     }
+    double sim_end = MPI_Wtime();
 
-
-    // return average concentartion of V
+    // Compute avg V
     double avgV = 0.0;
-    for (int i = 0; i < size * size; i++) {
-        avgV += V[i];
-    }
+    for (int i = 0; i < size * size; i++) avgV += V[i];
     avgV /= (size * size);
 
-    // Write output to file
-    write_png("output.png", V, size);
+    // Print in grep-friendly form
+    printf("Init_time:%.6f\n", init_end - init_start);
+    printf("Compute_time:%.6f\n", sim_end - sim_start);
+    printf("Average concentration of V: %.6f\n", avgV);
 
-    // Cleanup
+    // Save the final state of V to a PNG file
+    write_png("output_seq.png", V, size);
+
+    // Clean up
     free(U);
     free(V);
     free(U_next);
     free(V_next);
-
 
     return avgV;
 }

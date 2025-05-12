@@ -3,10 +3,12 @@
 #SBATCH --output=slurm_logs/gray_scott_%j.out
 #SBATCH --error=slurm_logs/gray_scott_%j.err
 #SBATCH --ntasks=1                   # Total MPI processes
-#SBATCH --cpus-per-task=4            # Threads per process (OpenMP)
+#SBATCH --cpus-per-task=1            # Threads per process (OpenMP)
 #SBATCH --gres=gpu:1                 
-#SBATCH --time=00:30:00              
+#SBATCH --time=4:30:00              
 #SBATCH --partition=gpu              
+#SBATCH --cpus-per-task=1
+#SBATCH --nodelist=gwn03
 
 module load CUDA
 module load OpenMPI
@@ -15,15 +17,12 @@ module load GCC
 # Set OpenMP threads
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-
 # Compile once
 nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
 
 echo "mode,grid_size,block_size,init_time,compute_time,avgV" > timings_sequential.csv
 
-# 512 1024 2048 4096
-for N in 256; do
+for N in 256 512 1024 2048 4096; do
     echo "Running N=$N"
     output=$(mpirun -np $SLURM_NTASKS ./gray_scott $N)
 

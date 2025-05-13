@@ -13,7 +13,8 @@ module load OpenMPI
 module load GCC
 
 # Set OpenMP threads
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+# export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=1
 
 # Compile (adjust for MPI + OpenMP + CUDA)
 nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c

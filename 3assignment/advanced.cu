@@ -239,6 +239,8 @@ double gray_scott2D(gs_config config){
             float *d_V_middle = device ? d_V_lower_middle : d_V_upper_middle;
             // Launch kernel
             gray_scott_kernel<<<gridSize, blockSize>>>(device, d_U_half, d_V_half, d_U_half_next, d_V_half_next, d_U_middle, d_V_middle, size, size_half, dt, du, dv, f, k);
+            // Synchronize device
+            cudaDeviceSynchronize();
             // Copy border elements to other gpu
             if (device == 0) {
                 cudaMemcpyPeer(d_U_upper_middle, 1, d_U_upper + (size_half - 1) * size, 0, size * sizeof(float));
@@ -267,6 +269,8 @@ double gray_scott2D(gs_config config){
                 d_V_lower = d_V_lower_next;
                 d_V_lower_next = temp_V;
             }
+            // Synchronize device
+            cudaDeviceSynchronize();
         }
     }
     // Copy result back to host

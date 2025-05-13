@@ -18,3 +18,7 @@ parallel: parallel_gray_scott.cu main_parallel.c
 .PHONY: shared_memory
 shared_memory: parallel_gray_scott.cu main_parallel.c
 	$(NVCC) -DUSE_SHARED_MEMORY -DBLOCK_SIZE_X=$(BLOCK_SIZE_X) -DBLOCK_SIZE_Y=$(BLOCK_SIZE_Y) $(NVCFLAGS) -o par_gray_scott parallel_gray_scott.cu main_parallel.c
+
+.PHONY: advanced
+advanced: advanced.cu main_parallel.c
+	$(NVCC) -DBLOCK_SIZE_X=$(BLOCK_SIZE_X) -DBLOCK_SIZE_Y=$(BLOCK_SIZE_Y) $(NVCFLAGS) -o advanced advanced.cu main_parallel.c

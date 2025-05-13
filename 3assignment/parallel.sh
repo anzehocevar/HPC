@@ -32,7 +32,7 @@ echo "Version,N,BlockSizeX,BlockSizeY,Time,AvgConcU,AvgConcV" > timings_parallel
 
 # Parallel timings
 for N in 256 512 1024 2048 4096; do
-  for BX in 8 16 32; do
+  for BX in 8 16 24 32; do
     BY=$BX
     ARGS="$N 5000 $BX $BY 1.0 0.16 0.08 0.06 0.062"
     OUTPUT=$(mpirun -np $N_PROCS ./par_gray_scott $ARGS)

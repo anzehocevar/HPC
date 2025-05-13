@@ -243,12 +243,12 @@ double gray_scott2D(gs_config config){
             cudaDeviceSynchronize();
             // Copy border elements to other gpu
             if (device == 0) {
-                cudaMemcpyPeer(d_U_upper_middle, 1, d_U_upper + (size_half - 1) * size, 0, size * sizeof(float));
-                cudaMemcpyPeer(d_V_upper_middle, 1, d_V_upper + (size_half - 1) * size, 0, size * sizeof(float));
+                cudaMemcpyPeer(d_U_upper_middle, 1, d_U_upper_next + (size_half - 1) * size, 0, size * sizeof(float));
+                cudaMemcpyPeer(d_V_upper_middle, 1, d_V_upper_next + (size_half - 1) * size, 0, size * sizeof(float));
             }
             else {
-                cudaMemcpyPeer(d_U_lower_middle, 0, d_U_lower, 1, size * sizeof(float));
-                cudaMemcpyPeer(d_V_lower_middle, 0, d_V_lower, 1, size * sizeof(float));
+                cudaMemcpyPeer(d_U_lower_middle, 0, d_U_lower_next, 1, size * sizeof(float));
+                cudaMemcpyPeer(d_V_lower_middle, 0, d_V_lower_next, 1, size * sizeof(float));
             }
             // Synchronize device
             cudaDeviceSynchronize();

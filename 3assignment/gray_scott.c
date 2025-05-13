@@ -85,11 +85,11 @@ double gray_scott2D(gs_config config){
     float *U_next = (float *)malloc(size * size * sizeof(float));
     float *V_next = (float *)malloc(size * size * sizeof(float));
 
+    // Start stopwatch
+    double start = omp_get_wtime();
     
     // Initialize U and V
     initUV2D(U, V, size);
-
-    double start = omp_get_wtime();
 
     /*
     YOUR SOLUTION GOES HERE

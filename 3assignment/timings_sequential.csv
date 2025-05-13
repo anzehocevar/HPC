@@ -1,6 +1,6 @@
 Version,GridSize,Time
-sequential,256,7.982
-sequential,512,26.299
-sequential,1024,97.297
-sequential,2048,389.144
-sequential,4096,1529.656
+sequential,256,7.903
+sequential,512,24.385
+sequential,1024,100.806
+sequential,2048,380.795
+sequential,4096,1554.910

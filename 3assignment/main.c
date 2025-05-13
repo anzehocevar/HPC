@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     // For this configuration, the the average concentration of V is 0.11917.
     // gs_config config1 = {.n = 128, .steps = 2000, .dt = 1, .du = 0.04, .dv = 0.02, .f = 0.02, .k = 0.048};
     // configuration from instructions
-    gs_config config1 = {.n = 128, .steps = 5000, .dt = 1, .du = 0.16, .dv = 0.08, .f = 0.06, .k = 0.062};
+    gs_config config1 = {.n = GRID_SIZE, .steps = 5000, .dt = 1, .du = 0.16, .dv = 0.08, .f = 0.06, .k = 0.062};
     benchmark(1, rank, config1);
     MPI_Finalize();
     return 0;

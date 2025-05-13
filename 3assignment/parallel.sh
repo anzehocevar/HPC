@@ -26,13 +26,19 @@ ARGS="128 5000 16 16 1.0 0.16 0.08 0.06 0.062"
 
 # Run the simulation
 # mpirun -np $SLURM_NTASKS ./par_gray_scott $ARGS
+N_PROCS=1
+
+echo "Version,N,BlockSizeX,BlockSizeY,Time,AvgConcU,AvgConcV" > timings_parallel.csv
 
 # Parallel timings
 for N in 256 512 1024 2048 4096; do
   for BX in 8 16 32; do
     BY=$BX
     ARGS="$N 5000 $BX $BY 1.0 0.16 0.08 0.06 0.062"
-    T=$(mpirun -np $SLURM_NTASKS ./par_gray_scott $ARGS | grep -Eo '[0-9]+\.[0-9]+$')
-    echo "parallel,$N,$BX,$BY,$T" >> timings_parallel.csv
+    OUTPUT=$(mpirun -np $N_PROCS ./par_gray_scott $ARGS)
+    ELAPSED_TIME=$(echo "$OUTPUT" | grep "Elapsed time" | grep -Eo "[0-9]+\.[0-9]+")
+    AVG_CONC_U=$(echo "$OUTPUT" | grep "concentration of U" | grep -Eo "[0-9]+\.[0-9]+")
+    AVG_CONC_V=$(echo "$OUTPUT" | grep "concentration of V" | grep -Eo "[0-9]+\.[0-9]+")
+    echo "parallel,$N,$BX,$BY,$ELAPSED_TIME,$AVG_CONC_U,$AVG_CONC_V" >> timings_parallel.csv
   done
 done

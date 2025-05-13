@@ -1,6 +1,6 @@
-version,grid_size,block_x,block_y,time
-sequential,256,0,0,3.871
-sequential,512,0,0,13.299
-sequential,1024,0,0,51.838
-sequential,2048,0,0,202.366
-sequential,4096,0,0,855.968
+Version,GridSize,Time
+sequential,256,8.215
+sequential,512,26.041
+sequential,1024,94.438
+sequential,2048,380.317
+sequential,4096,1509.654

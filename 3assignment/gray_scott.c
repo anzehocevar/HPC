@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <omp.h>
-#include <mpi.h>
 #include "gray_scott.h"
 
 // Helper macro to access 2D grid

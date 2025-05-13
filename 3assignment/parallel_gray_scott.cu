@@ -138,6 +138,29 @@ void initUV2D(float *U, float *V, int size) {
     }
 }
 
+__global__ void initUV2D_kernel(float *U, float *V, int size) {
+
+    // Get global thread indices
+    int i = blockIdx.y * blockDim.y + threadIdx.y;
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i >= size || j >= size) return;
+    int idx = IDX(i, j, size);
+
+    // Set initial values: U=1.0, V=0.0
+    U[idx] = 1.0f;
+    V[idx] = 0.0f;
+
+    // Seed a small square in the center
+    int h = size / 2;
+    int r = size / 8;
+    if (i >= h - r && i < h + r && j >= h - r && j < h + r) {
+        U[idx] = 0.75f;
+        V[idx] = 0.25f;
+    }
+
+}
+
 // visualize
 void colormap(float value, unsigned char *r, unsigned char *g, unsigned char *b) {
     float x = fminf(fmaxf(value, 0.0f), 1.0f);

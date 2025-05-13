@@ -3,7 +3,7 @@
 #include <math.h>
 #include <omp.h>
 #include <mpi.h>
-#include "gray_scott.h"
+#include "parallel_gray_scott.h"
 
 #include <cuda_runtime.h>
 #include <cuda.h>

@@ -211,10 +211,6 @@ double gray_scott2D(gs_config config){
     float *U_next = (float *)malloc(size * size * sizeof(float));
     float *V_next = (float *)malloc(size * size * sizeof(float));
 
-    
-    // Initialize U and V
-    initUV2D(U, V, size);
-
     // Allocate device memory
     float *d_U, *d_V, *d_U_next, *d_V_next;
     cudaMalloc((void **)&d_U, size * size * sizeof(float));
@@ -222,6 +218,12 @@ double gray_scott2D(gs_config config){
 
     cudaMalloc((void **)&d_U_next, size * size * sizeof(float));
     cudaMalloc((void **)&d_V_next, size * size * sizeof(float));
+
+    // // Initialize U and V
+    // initUV2D(U, V, size);
+    // // Copy initial data to device
+    // cudaMemcpy(d_U, U, size * size * sizeof(float), cudaMemcpyHostToDevice);
+    // cudaMemcpy(d_V, V, size * size * sizeof(float), cudaMemcpyHostToDevice);
 
     // Define block and grid sizes
     dim3 blockSize(BLOCK_SIZE_X, BLOCK_SIZE_Y);
@@ -231,9 +233,7 @@ double gray_scott2D(gs_config config){
     cudaDeviceSynchronize();
     // Start the timer
     double start = MPI_Wtime();
-    // Copy initial data to device
-    cudaMemcpy(d_U, U, size * size * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_V, V, size * size * sizeof(float), cudaMemcpyHostToDevice);
+    initUV2D_kernel<<<gridSize, blockSize>>>(d_U, d_V, size);
     // Main loop
     for (int t = 0; t < iterations; t++) {
         // Launch kernel

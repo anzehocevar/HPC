@@ -89,6 +89,8 @@ double gray_scott2D(gs_config config){
     // Initialize U and V
     initUV2D(U, V, size);
 
+    double start = omp_get_wtime();
+
     /*
     YOUR SOLUTION GOES HERE
     Write a 2D Gray-Scott simulation in C/C++ using CUDA, OpenMPI, and OpenMP.
@@ -135,6 +137,9 @@ double gray_scott2D(gs_config config){
         V_next = temp;
     }
 
+    double end = omp_get_wtime();
+    double time = end - start;
+    printf("Elapsed time: %.3f seconds\n", time);
 
     // return average concentartion of V
     double avgV = 0.0;

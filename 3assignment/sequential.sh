@@ -22,6 +22,7 @@ echo "Version,GridSize,Time" > timings_sequential.csv
 # Sequential timings
 for N in 256 512 1024 2048 4096; do
     make GRID_SIZE=$N sequential
-    T=$(./gray_scott | grep -Eo '[0-9]+\.[0-9]+$')
-    echo "sequential,$N,$T" >> timings_sequential.csv
+    OUTPUT=$(./gray_scott)
+    TIME=$(echo "$OUTPUT" | grep "Elapsed time" | grep -Eo "[0-9]+\.[0-9]+")
+    echo "sequential,$N,$TIME" >> timings_sequential.csv
 done

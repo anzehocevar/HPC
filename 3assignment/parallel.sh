@@ -17,8 +17,7 @@ module load OpenMPI
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 # Compile CUDA + OpenMP + MPI
-nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
-
+# nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
 
 # Example arguments:
 #   grid_size iterations blockSizeX blockSizeY dt du dv f k
@@ -34,6 +33,7 @@ echo "Version,N,BlockSizeX,BlockSizeY,Time,AvgConcU,AvgConcV" > timings_parallel
 for N in 256 512 1024 2048 4096; do
   for BX in 8 16 24 32; do
     BY=$BX
+    make BLOCK_SIZE_X=$BX BLOCK_SIZE_Y=$BY parallel
     ARGS="$N 5000 $BX $BY 1.0 0.16 0.08 0.06 0.062"
     OUTPUT=$(mpirun -np $N_PROCS ./par_gray_scott $ARGS)
     ELAPSED_TIME=$(echo "$OUTPUT" | grep "Elapsed time" | grep -Eo "[0-9]+\.[0-9]+")

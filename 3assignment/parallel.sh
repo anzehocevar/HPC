@@ -17,7 +17,7 @@ module load OpenMPI
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 # Compile CUDA + OpenMP + MPI
-nvcc -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
+nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
 
 
 # Example arguments:

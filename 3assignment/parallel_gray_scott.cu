@@ -25,7 +25,7 @@ __global__ void dummyKernel() {
     // empty warm-up kernel
 }
 
-__global__ void gray_scott_kernel_1(
+__global__ void gray_scott_kernel_shared_memory(
     float *U, float *V, float *U_next, float *V_next,
     int size, float dt, float du, float dv, float f, float k) {
 
@@ -237,7 +237,11 @@ double gray_scott2D(gs_config config){
     // Main loop
     for (int t = 0; t < iterations; t++) {
         // Launch kernel
+#ifdef USE_SHARED_MEMORY
+        gray_scott_kernel_shared_memory<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
+#else
         gray_scott_kernel<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
+#endif
         // Synchronize device
         cudaDeviceSynchronize();
         // Swap pointers

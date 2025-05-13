@@ -19,12 +19,12 @@ export OMP_NUM_THREADS=1
 # Compile (adjust for MPI + OpenMP + CUDA)
 nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
 
-echo "version,grid_size,block_x,block_y,time" > timings.csv
+echo "Version,GridSize,Time" > timings_sequential.csv
 
 # Sequential timings
 for N in 256 512 1024 2048 4096; do
     sed -i "s/\.n = [0-9]*/.n = $N/" main.c
     nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
     T=$(mpirun -np $SLURM_NTASKS ./gray_scott | grep -Eo '[0-9]+\.[0-9]+$')
-    echo "sequential,$N,0,0,$T" >> timings_sequential.csv
+    echo "sequential,$N,$T" >> timings_sequential.csv
 done

@@ -199,10 +199,6 @@ double gray_scott2D(gs_config config){
     cudaMalloc((void **)&d_U_next, size * size * sizeof(float));
     cudaMalloc((void **)&d_V_next, size * size * sizeof(float));
 
-    // Copy initial data to device
-    cudaMemcpy(d_U, U, size * size * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_V, V, size * size * sizeof(float), cudaMemcpyHostToDevice);
-
     // Define block and grid sizes
     dim3 blockSize(BLOCK_SIZE_X, BLOCK_SIZE_Y);
     dim3 gridSize((size + blockSize.x - 1) / blockSize.x, (size + blockSize.y - 1) / blockSize.y);
@@ -211,6 +207,9 @@ double gray_scott2D(gs_config config){
     cudaDeviceSynchronize();
     // Start the timer
     double start = MPI_Wtime();
+    // Copy initial data to device
+    cudaMemcpy(d_U, U, size * size * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_V, V, size * size * sizeof(float), cudaMemcpyHostToDevice);
     // Main loop
     for (int t = 0; t < iterations; t++) {
         // Launch kernel

@@ -8,8 +8,6 @@
 #SBATCH --time=00:30:00              
 #SBATCH --partition=gpu              
 
-module load CUDA
-module load OpenMPI
 module load GCC
 
 # Set OpenMP threads
@@ -24,6 +22,6 @@ echo "Version,GridSize,Time" > timings_sequential.csv
 # Sequential timings
 for N in 256 512 1024 2048 4096; do
     make GRID_SIZE=$N sequential
-    T=$(mpirun -np $SLURM_NTASKS ./gray_scott | grep -Eo '[0-9]+\.[0-9]+$')
+    T=$(./gray_scott | grep -Eo '[0-9]+\.[0-9]+$')
     echo "sequential,$N,$T" >> timings_sequential.csv
 done

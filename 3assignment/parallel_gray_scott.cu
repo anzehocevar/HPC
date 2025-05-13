@@ -14,9 +14,13 @@
 #include "stb_image.h"
 #include "stb_image_write.h"
 
-// Must be passed via -DGRID_SIZE with compiler
-// #define BLOCK_SIZE_X 16
-// #define BLOCK_SIZE_Y 16
+// Must be passed via -DBLOCK_SIZE_... with compiler
+#ifndef BLOCK_SIZE_X
+#define BLOCK_SIZE_X 16
+#endif
+#ifndef BLOCK_SIZE_Y
+#define BLOCK_SIZE_Y 16
+#endif
 
 // Helper macro to access 2D grid
 #define IDX(i, j, size) ((i) * (size) + (j))

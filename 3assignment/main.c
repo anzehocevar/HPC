@@ -3,6 +3,10 @@
 #include <omp.h>
 #include "gray_scott.h"
 
+#ifndef GRID_SIZE
+#define GRID_SIZE 128
+#endif
+
 int benchmark(int case_id, gs_config config)
 {
     double start = omp_get_wtime();

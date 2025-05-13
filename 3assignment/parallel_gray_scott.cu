@@ -214,7 +214,7 @@ double gray_scott2D(gs_config config){
     // Main loop
     for (int t = 0; t < iterations; t++) {
         // Launch kernel
-        gray_scott_kernel_1<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
+        gray_scott_kernel<<<gridSize, blockSize>>>(d_U, d_V, d_U_next, d_V_next, size, dt, du, dv, f, k);
         // Synchronize device
         cudaDeviceSynchronize();
         // Swap pointers

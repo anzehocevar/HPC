@@ -60,8 +60,8 @@ __global__ void gray_scott_kernel(
 
     float upper_neighbour_U = (device == 1 && i <= 0) ? U_middle[j] : U_half[idx_up];
     float upper_neighbour_V = (device == 1 && i <= 0) ? V_middle[j] : V_half[idx_up];
-    float lower_neighbour_U = (device == 0 && i >= blockDim.y - 1) ? U_middle[j] : U_half[idx_down];
-    float lower_neighbour_V = (device == 0 && i >= blockDim.y - 1) ? V_middle[j] : V_half[idx_down];
+    float lower_neighbour_U = (device == 0 && i >= size_half - 1) ? U_middle[j] : U_half[idx_down];
+    float lower_neighbour_V = (device == 0 && i >= size_half - 1) ? V_middle[j] : V_half[idx_down];
 
     float lap_u = upper_neighbour_U + lower_neighbour_U + U_half[idx_left] + U_half[idx_right] - 4 * u;
     float lap_v = upper_neighbour_V + lower_neighbour_V + V_half[idx_left] + V_half[idx_right] - 4 * v;

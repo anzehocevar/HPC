@@ -1,6 +1,6 @@
-Version,GridSize,Time
-sequential,256,7.903
-sequential,512,24.385
-sequential,1024,100.806
-sequential,2048,380.795
-sequential,4096,1554.910
+Hostname,Version,GridSize,Time
+wn201.arnes.si,sequential,256,7.925
+wn201.arnes.si,sequential,512,25.286
+wn201.arnes.si,sequential,1024,98.363
+wn201.arnes.si,sequential,2048,386.671
+wn201.arnes.si,sequential,4096,1678.361

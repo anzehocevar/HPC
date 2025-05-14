@@ -146,7 +146,7 @@ void enable_p2p() {
         exit(1);
     }
 
-    cudaSetDevice(0);
+    cudaSetDevice(1);
     cudaDeviceCanAccessPeer(&is_able, 1, 0);
     if (is_able) {
         cudaDeviceEnablePeerAccess(0, 0);
@@ -169,7 +169,7 @@ double gray_scott2D(gs_config config){
     float f = config.f;
     float k = config.k;
 
-    // enable_p2p();
+    enable_p2p();
 
     if (size % 2 != 0) {
         printf("Grid size must be an even number\n");
@@ -195,7 +195,7 @@ double gray_scott2D(gs_config config){
     cudaMalloc((void **)&d_U_bottom, size * sizeof(float));
     cudaMalloc((void **)&d_V_bottom, size * sizeof(float));
 
-    cudaSetDevice(0);
+    cudaSetDevice(1);
     cudaMalloc((void **)&d_U_lower, size_half * size * sizeof(float));
     cudaMalloc((void **)&d_V_lower, size_half * size * sizeof(float));
     cudaMalloc((void **)&d_U_lower_next, size_half * size * sizeof(float));
@@ -234,7 +234,7 @@ double gray_scott2D(gs_config config){
         // printf("iter: %d\n", t);
         #pragma omp parallel for num_threads(NUM_GPUS)
         for (int device = 0; device < NUM_GPUS; device++) {
-            cudaSetDevice(0);
+            cudaSetDevice(device);
             float *d_U_half = device ? d_U_lower : d_U_upper;
             float *d_V_half = device ? d_V_lower : d_V_upper;
             float *d_U_half_next = device ? d_U_lower_next : d_U_upper_next;
@@ -252,16 +252,16 @@ double gray_scott2D(gs_config config){
         for (int device = 0; device < NUM_GPUS; device++) {
             // Copy border elements to other gpu
             if (device == 0) {
-                cudaMemcpy(d_U_upper_middle, &(d_U_upper_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);
-                cudaMemcpy(d_V_upper_middle, &(d_V_upper_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);
-                cudaMemcpy(d_U_top, &(d_U_upper_next[0]), size * sizeof(float), cudaMemcpyDeviceToDevice);
-                cudaMemcpy(d_V_top, &(d_V_upper_next[0]), size * sizeof(float), cudaMemcpyDeviceToDevice);
+                cudaMemcpyPeerAsync(d_U_upper_middle, 1, &(d_U_upper_next[(size_half - 1) * size]), 0, size * sizeof(float));
+                cudaMemcpyPeerAsync(d_V_upper_middle, 1, &(d_V_upper_next[(size_half - 1) * size]), 0, size * sizeof(float));
+                cudaMemcpyPeerAsync(d_U_top, 1, &(d_U_upper_next[0]), 0, size * sizeof(float));
+                cudaMemcpyPeerAsync(d_V_top, 1, &(d_V_upper_next[0]), 0, size * sizeof(float));
             }
             else {
-                cudaMemcpy(d_U_lower_middle, &(d_U_lower_next[0]), size * sizeof(float), cudaMemcpyDeviceToDevice);
-                cudaMemcpy(d_V_lower_middle, &(d_V_lower_next[0]), size * sizeof(float), cudaMemcpyDeviceToDevice);
-                cudaMemcpy(d_U_bottom, &(d_U_lower_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);
-                cudaMemcpy(d_V_bottom, &(d_V_lower_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);
+                cudaMemcpyPeerAsync(d_U_lower_middle, 0, &(d_U_lower_next[0]), 1, size * sizeof(float));
+                cudaMemcpyPeerAsync(d_V_lower_middle, 0, &(d_V_lower_next[0]), 1, size * sizeof(float));
+                cudaMemcpyPeerAsync(d_U_bottom, 0, &(d_U_lower_next[(size_half - 1) * size]), 1, size * sizeof(float));
+                cudaMemcpyPeerAsync(d_V_bottom, 0, &(d_V_lower_next[(size_half - 1) * size]), 1, size * sizeof(float));
             }
             // cudaDeviceSynchronize();
             // Swap pointers
@@ -288,7 +288,7 @@ double gray_scott2D(gs_config config){
     cudaSetDevice(0);
     cudaMemcpy(&(U[0]), d_U_upper, size_half * size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(&(V[0]), d_V_upper, size_half * size * sizeof(float), cudaMemcpyDeviceToHost);
-    cudaSetDevice(0);
+    cudaSetDevice(1);
     cudaMemcpy(&(U[size_half * size]), d_U_lower, size_half * size * sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(&(V[size_half * size]), d_V_lower, size_half * size * sizeof(float), cudaMemcpyDeviceToHost);
     // Stop the timer
@@ -324,7 +324,7 @@ double gray_scott2D(gs_config config){
     cudaFree(d_U_bottom);
     cudaFree(d_V_bottom);
 
-    cudaSetDevice(0);
+    cudaSetDevice(1);
     cudaFree(d_U_lower);
     cudaFree(d_V_lower);
     cudaFree(d_U_lower_next);
@@ -333,7 +333,6 @@ double gray_scott2D(gs_config config){
     cudaFree(d_V_upper_middle);
     cudaFree(d_U_top);
     cudaFree(d_V_top);
-
 
     // Free host memory
     free(U);

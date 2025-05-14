@@ -37,10 +37,10 @@ OUTPUT_CSV="timings_${TYPE}.csv"
 echo "Hostname,Version,N,BlockSizeX,BlockSizeY,Time,AvgConcU,AvgConcV" > "$OUTPUT_CSV"
 
 # Parallel timings
-for N in 256 512 1024 2048 4096; do
-  for BX in 8 16 24 32; do
-    BY=$BX
-    make BLOCK_SIZE_X=$BX BLOCK_SIZE_Y=$BY "$TYPE"
+for BX in 8 16 24 32; do
+  BY=$BX
+  make BLOCK_SIZE_X=$BX BLOCK_SIZE_Y=$BY "$TYPE"
+  for N in 256 512 1024 2048 4096; do
     ARGS="$N 5000 $BX $BY 1.0 0.16 0.08 0.06 0.062"
     OUTPUT=$(mpirun -np $N_PROCS ./par_gray_scott $ARGS)
     ELAPSED_TIME=$(echo "$OUTPUT" | grep "Elapsed time" | grep -Eo "[0-9]+\.[0-9]+")

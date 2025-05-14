@@ -296,14 +296,14 @@ double gray_scott2D(gs_config config){
     double elapsed = end - start;
     printf("Elapsed time: %f seconds\n", elapsed);
     // Print average concentration of U
-    double avgU = 0.0;
+    float avgU = 0.0;
     for (int i = 0; i < size * size; i++) {
         avgU += U[i];
     }
     avgU /= (size * size);
     printf("Average concentration of U: %f\n", avgU);
     // Print average concentration of V
-    double avgV = 0.0;
+    float avgV = 0.0;
     for (int i = 0; i < size * size; i++) {
         avgV += V[i];
     }

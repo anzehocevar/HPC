@@ -260,8 +260,7 @@ double gray_scott2D(gs_config config){
                 cudaMemcpy(d_U_bottom, &(d_U_lower_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);
                 cudaMemcpy(d_V_bottom, &(d_V_lower_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);
             }
-            // Synchronize device
-            cudaDeviceSynchronize();
+            // cudaDeviceSynchronize();
             // Swap pointers
             if (device == 0) {
                 float *temp_U = d_U_upper;
@@ -279,7 +278,6 @@ double gray_scott2D(gs_config config){
                 d_V_lower = d_V_lower_next;
                 d_V_lower_next = temp_V;
             }
-            // Synchronize device
             cudaDeviceSynchronize();
         }
     }

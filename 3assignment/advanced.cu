@@ -247,6 +247,9 @@ double gray_scott2D(gs_config config){
             gray_scott_kernel<<<gridSize, blockSize>>>(device, d_U_half, d_V_half, d_U_half_next, d_V_half_next, d_U_middle, d_V_middle, d_U_tb, d_V_tb, size, size_half, dt, du, dv, f, k);
             // Synchronize device
             cudaDeviceSynchronize();
+        }
+        #pragma omp parallel for num_threads(NUM_GPUS)
+        for (int device = 0; device < NUM_GPUS; device++) {
             // Copy border elements to other gpu
             if (device == 0) {
                 cudaMemcpy(d_U_upper_middle, &(d_U_upper_next[(size_half - 1) * size]), size * sizeof(float), cudaMemcpyDeviceToDevice);

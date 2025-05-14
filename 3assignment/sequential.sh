@@ -10,6 +10,8 @@
 
 module load GCC
 
+HOST="$(hostname)"
+
 # Set OpenMP threads
 # export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export OMP_NUM_THREADS=1
@@ -17,12 +19,12 @@ export OMP_NUM_THREADS=1
 # Compile (adjust for MPI + OpenMP + CUDA)
 # nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c
 
-echo "Version,GridSize,Time" > timings_sequential.csv
+echo "Hostname,Version,GridSize,Time" > timings_sequential.csv
 
 # Sequential timings
 for N in 256 512 1024 2048 4096; do
     make GRID_SIZE=$N sequential
     OUTPUT=$(./gray_scott)
     TIME=$(echo "$OUTPUT" | grep "Elapsed time" | grep -Eo "[0-9]+\.[0-9]+")
-    echo "sequential,$N,$TIME" >> timings_sequential.csv
+    echo "$HOST,sequential,$N,$TIME" >> timings_sequential.csv
 done

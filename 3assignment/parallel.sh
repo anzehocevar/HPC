@@ -16,6 +16,8 @@ module load OpenMPI
 # Set OpenMP threads
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
+HOST="$(hostname)"
+
 # Compile CUDA + OpenMP + MPI
 # nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o par_gray_scott parallel_gray_scott.cu main_parallel.c
 
@@ -32,7 +34,7 @@ N_PROCS=1
 TYPE="advanced"
 OUTPUT_CSV="timings_${TYPE}.csv"
 
-echo "Version,N,BlockSizeX,BlockSizeY,Time,AvgConcU,AvgConcV" > "$OUTPUT_CSV"
+echo "Hostname,Version,N,BlockSizeX,BlockSizeY,Time,AvgConcU,AvgConcV" > "$OUTPUT_CSV"
 
 # Parallel timings
 for N in 256 512 1024 2048 4096; do
@@ -44,6 +46,6 @@ for N in 256 512 1024 2048 4096; do
     ELAPSED_TIME=$(echo "$OUTPUT" | grep "Elapsed time" | grep -Eo "[0-9]+\.[0-9]+")
     AVG_CONC_U=$(echo "$OUTPUT" | grep "concentration of U" | grep -Eo "[0-9]+\.[0-9]+")
     AVG_CONC_V=$(echo "$OUTPUT" | grep "concentration of V" | grep -Eo "[0-9]+\.[0-9]+")
-    echo "$TYPE,$N,$BX,$BY,$ELAPSED_TIME,$AVG_CONC_U,$AVG_CONC_V" >> "$OUTPUT_CSV"
+    echo "$HOST,$TYPE,$N,$BX,$BY,$ELAPSED_TIME,$AVG_CONC_U,$AVG_CONC_V" >> "$OUTPUT_CSV"
   done
 done

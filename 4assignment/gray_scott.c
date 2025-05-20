@@ -52,6 +52,7 @@ void write_png(const char *filename, float *V, int size) {
 // Reference function for initialization of U and V
 void initUV2D(float *U, float *V, int size) {
     // Set initial values: U=1.0, V=0.0
+    // with MPI
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             U[IDX(i, j, size)] = 1.0f;
@@ -100,9 +101,48 @@ double gray_scott2D(gs_config config){
     double start = omp_get_wtime();
     
     // Initialize U and V with MPI
+    initUV2D(U, V, size);
     
-
     // Main loop with MPI
+    for(int it = 0;it < iterations; it++){
+        // Update U and V using the Gray-Scott model
+        for(int i = 0;i < size; i++){
+            for(int j = 0;j < size;j++){
+                // Get the indices of the neighbors
+                int up = (i - 1 + size) % size;
+                int down = (i + 1) % size;
+                int left = (j - 1 + size) % size;
+                int right = (j + 1) % size;
+
+                // Compute the Laplacian
+                float laplacian_U = U[IDX(up, j, size)] + U[IDX(down, j, size)] +
+                                    U[IDX(i, left, size)] + U[IDX(i, right, size)] -
+                                    4 * U[IDX(i, j, size)];
+
+                float laplacian_V = V[IDX(up, j, size)] + V[IDX(down, j, size)] +
+                                    V[IDX(i, left, size)] + V[IDX(i, right, size)] -
+                                    4 * V[IDX(i, j, size)];
+
+                // Update U and V
+                U_next[IDX(i, j, size)] = U[IDX(i, j, size)] +
+                                                dt * (du * laplacian_U - U[IDX(i, j, size)] * V[IDX(i, j, size)] * V[IDX(i, j, size)] +
+                                                f * (1 - U[IDX(i, j, size)]));
+
+                V_next[IDX(i, j, size)] = V[IDX(i, j, size)] +
+                                                dt * (dv * laplacian_V + U[IDX(i,j,size)] * V[IDX(i,j,size)] * V[IDX(i,j,size)] -
+                                                (f + k) * V[IDX(i,j,size)]);
+            }
+        }
+
+        // Swap pointers
+        float *temp = U;
+        U = U_next;
+        U_next = temp;
+
+        temp = V;
+        V = V_next;
+        V_next = temp;
+    }
 
 
     double end = omp_get_wtime();

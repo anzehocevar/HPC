@@ -14,8 +14,8 @@ module load openmpi
 HOST="$(hostname)"
 
 # Set OpenMP threads
-# export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+# export OMP_NUM_THREADS=1
 
 # Compile (adjust for MPI + OpenMP + CUDA)
 # nvcc -diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi -o gray_scott gray_scott.cu main.c

@@ -5,6 +5,10 @@
 #include "mpi.h"
 #include "gray_scott.h"
 
+#ifndef GRID_SIZE
+#define GRID_SIZE 128
+#endif
+
 // Helper macro to access 2D grid
 #define IDX(i, j, size) ((i) * (size) + (j))
 
@@ -12,7 +16,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_write.h"
-
 
 // visualize
 void colormap(float value, unsigned char *r, unsigned char *g, unsigned char *b) {

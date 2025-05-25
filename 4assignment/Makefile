@@ -1,7 +1,5 @@
 CC=gcc
 CFLAGS=-fopenmp -O2 -lm -lmpi
-NVCC=nvcc
-NVCFLAGS=-diag-suppress 550 -Xcompiler -fopenmp -O2 -lcuda -lcudart -lmpi
 
 GRID_SIZE ?= 128
 

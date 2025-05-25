@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <omp.h>
+#include "mpi.h"
 #include "gray_scott.h"
 
 #ifndef GRID_SIZE
@@ -54,6 +55,7 @@ void write_png(const char *filename, float *V, int size) {
 // Reference function for initialization of U and V
 void initUV2D(float *U, float *V, int size) {
     // Set initial values: U=1.0, V=0.0
+    // with MPI
     for (int i = 0; i < size; i++) {
         for (int j = 0; j < size; j++) {
             U[IDX(i, j, size)] = 1.0f;
@@ -73,6 +75,16 @@ void initUV2D(float *U, float *V, int size) {
 
 
 double gray_scott2D(gs_config config){
+    // Initialize MPI
+    MPI_Status status;
+    int myid, procs;
+    MPI_Init(NULL, NULL);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(MPI_COMM_WORLD, &procs);
+
+
+
     // Initialize vars from .h
     int size = config.n;
     int iterations = config.steps;
@@ -91,10 +103,10 @@ double gray_scott2D(gs_config config){
     // Start stopwatch
     double start = omp_get_wtime();
     
-    // Initialize U and V
+    // Initialize U and V with MPI
     initUV2D(U, V, size);
     
-    // Main loop
+    // Main loop with MPI
     for(int it = 0;it < iterations; it++){
         // Update U and V using the Gray-Scott model
         for(int i = 0;i < size; i++){
@@ -155,6 +167,10 @@ double gray_scott2D(gs_config config){
     free(V);
     free(U_next);
     free(V_next);
+
+    // Finalize MPI
+    MPI_Finalize();
+
 
     return avgV;
 }

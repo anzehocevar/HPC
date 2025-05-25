@@ -97,6 +97,7 @@ double gray_scott2D(gs_config config){
     // Main loop
     for(int it = 0;it < iterations; it++){
         // Update U and V using the Gray-Scott model
+        #pragma omp parallel for collapse(2)
         for(int i = 0;i < size; i++){
             for(int j = 0;j < size;j++){
                 // Get the indices of the neighbors

@@ -21,10 +21,10 @@ CORES=$SLURM_NTASKS
 echo "Compiling with GRID_SIZE=$GRID_SIZE..."
 # make clean
 # make GRID_SIZE=$GRID_SIZE mpi
-mpicc -O3 -fopenmp -DGRID_SIZE=256 -o gray_scott gray_scott.c -lm
+mpicc -O3 -fopenmp -DGRID_SIZE=256 -o par_gray_scott par_gray_scott.c -lm
 
 # run and capture stdout
-OUTPUT=$(mpirun -np $CORES ./gray_scott)
+OUTPUT=$(mpirun -np $CORES ./par_gray_scott)
 
 
 # parse Mean V and Time

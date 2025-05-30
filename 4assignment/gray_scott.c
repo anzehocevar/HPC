@@ -112,6 +112,7 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
         int count = 0;
         if (rank > 0 || rank < procs-1) count = 4;
         if (count) MPI_Waitall(count, reqs, stats);
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // update interior
         for (int i = 1; i <= rows; i++) {
@@ -129,6 +130,7 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
                 V_next[IDX(i, j, N)] = v + dt * ( uv2 - (F+K)*v + Dv*lap_v);
             }
         }
+        MPI_Barrier(MPI_COMM_WORLD);
         // swap pointers
         float *tmp;
         tmp = U; U = U_next; U_next = tmp;

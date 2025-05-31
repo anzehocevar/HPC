@@ -92,8 +92,8 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
     double t0 = MPI_Wtime();
 
     // Buffers for non-blocking halos
-    MPI_Request reqs[4];
-    MPI_Status stats[4];
+    MPI_Request reqs[8];
+    MPI_Status stats[8];
 
     for (int t = 0; t < steps; t++) {
         // Communication with upper neighbor
@@ -102,14 +102,13 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
         MPI_Isend(&V[IDX(1, 0, N)], N, MPI_FLOAT, (rank-1+procs)%procs, 2, MPI_COMM_WORLD, &reqs[2]);
         MPI_Irecv(&V[IDX(0, 0, N)], N, MPI_FLOAT, (rank-1+procs)%procs, 3, MPI_COMM_WORLD, &reqs[3]);
         // Communication with lower neighbor
-        MPI_Isend(&U[IDX(rows, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 1, MPI_COMM_WORLD, &reqs[1]);
-        MPI_Irecv(&U[IDX(rows+1, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 0, MPI_COMM_WORLD, &reqs[0]);
-        MPI_Isend(&V[IDX(rows, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 3, MPI_COMM_WORLD, &reqs[3]);
-        MPI_Irecv(&V[IDX(rows+1, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 2, MPI_COMM_WORLD, &reqs[2]);
+        MPI_Isend(&U[IDX(rows, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 1, MPI_COMM_WORLD, &reqs[4]);
+        MPI_Irecv(&U[IDX(rows+1, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 0, MPI_COMM_WORLD, &reqs[5]);
+        MPI_Isend(&V[IDX(rows, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 3, MPI_COMM_WORLD, &reqs[6]);
+        MPI_Irecv(&V[IDX(rows+1, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 2, MPI_COMM_WORLD, &reqs[7]);
 
-        // Wait for all transfers to finish
-        MPI_Waitall(4, reqs, stats);
-        MPI_Barrier(MPI_COMM_WORLD);
+        // Wait for all transfers with both neighbours to finish
+        MPI_Waitall(8, reqs, stats);
 
         // update interior
         for (int i = 1; i <= rows; i++) {

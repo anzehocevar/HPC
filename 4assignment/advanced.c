@@ -160,29 +160,48 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
     MPI_Barrier(MPI_COMM_WORLD);
     double t1 = MPI_Wtime();
 
-    MPI_Datatype localGrid;
-    MPI_Type_vector(N_local, N_local, N_extended, MPI_FLOAT, &localGrid);
-    MPI_Type_commit(&localGrid);
+    float* V_local = (float*) malloc(N_local * N_local * sizeof(float));
+    for (int i = 1; i < N_extended-1; i++) {
+        for (int j = 1; j < N_extended-1; j++) {
+            V_local[IDX(i-1, j-1, N_local)] = V[IDX(i, j, N_extended)];
+        }
+    }
 
     // gather global V in rank 0 for output
+    float *V_full_tmp = NULL;
     float *V_full = NULL;
-    if (rank == 0) V_full = malloc(N * N * sizeof(float));
-    MPI_Gather(&V[IDX(1, 1, N_extended)], 1, localGrid,
-               V_full, 1, localGrid, 0, MPI_COMM_WORLD);
+    if (rank == 0) {
+        V_full_tmp = malloc(N * N * sizeof(float));
+        V_full = malloc(N * N * sizeof(float));
+    }
+    MPI_Gather(V_local, N_local * N_local, MPI_FLOAT,
+               V_full_tmp, N_local * N_local, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
+        for (int offset = 0; offset < N*N; offset++) {
+            int r = offset / (N_local*N_local);
+            int rRow = r / sqrtProcs;
+            int rCol = r % sqrtProcs;
+            int offsetLocal = offset % (N_local*N_local);
+            int i = offsetLocal / N_local;
+            int j = offsetLocal % N_local;
+            int gi = (rRow*N_local) + i;
+            int gj = (rCol*N_local) + j;
+            V_full[IDX(gi, gj, N)] = V_full_tmp[offset];
+        }
         write_png("output_5000.png", V_full, N);
+        free(V_full_tmp);
         free(V_full);
     }
 
     // compute local avg
-    // double local_sum = 0;
-    // for (int i = 1; i <= rows; i++) for (int j = 0; j < N; j++) local_sum += V[IDX(i, j, N)];
-    // double global_sum;
-    // MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    // if (rank == 0) printf("Mean V = %f, Time = %f sec\n", global_sum/(N*(double)N), (t1-t0));
+    double local_sum = 0;
+    for (int i = 0; i < N_local; i++) for (int j = 0; j < N_local; j++) local_sum += V_local[IDX(i, j, N)];
+    double global_sum;
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (rank == 0) printf("Mean V = %f, Time = %f sec\n", global_sum/(N*(double)N), (t1-t0));
 
-    free(U); free(V); free(U_next); free(V_next);
+    free(V_local); free(U); free(V); free(U_next); free(V_next);
     return t1 - t0;
 }
 

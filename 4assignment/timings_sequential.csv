@@ -1,0 +1,11 @@
+Hostname,Version,GridSize,Time
+gwn02.arnes.si,sequential,256,3.654
+gwn02.arnes.si,sequential,512,11.252
+gwn02.arnes.si,sequential,1024,38.481
+gwn02.arnes.si,sequential,2048,155.819
+gwn02.arnes.si,sequential,4096,694.222
+wn222.arnes.si,sequential,256,7.987
+wn222.arnes.si,sequential,512,25.961
+wn222.arnes.si,sequential,1024,97.211
+wn222.arnes.si,sequential,2048,379.577
+wn222.arnes.si,sequential,4096,1551.049

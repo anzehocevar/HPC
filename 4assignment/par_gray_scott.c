@@ -7,10 +7,6 @@
 // Helper macro to access 2D grid
 #define IDX(i, j, size) ((i) * (size) + (j))
 
-#ifndef GRID_SIZE
-#define GRID_SIZE 256
-#endif
-
 // Config struct (if not in gray_scott.h)
 typedef struct {
     int n;
@@ -164,10 +160,17 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &procs);
 
-    if (rank == 0) {
-        printf("Gray-Scott MPI: N=%d, procs=%d\n", GRID_SIZE, procs);
+    if (argc < 2) {
+        if (rank == 0) fprintf(stderr, "Error: usage: %s [grid size]\n", argv[0]);
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    gs_config cfg = { GRID_SIZE, 5000, 1.0f, 0.16f, 0.08f, 0.06f, 0.062f };
+    int grid_size;
+    sscanf(argv[1], "%d", &grid_size);
+
+    if (rank == 0) {
+        printf("Gray-Scott MPI: N=%d, procs=%d\n", grid_size, procs);
+    }
+    gs_config cfg = { grid_size, 5000, 1.0f, 0.16f, 0.08f, 0.06f, 0.062f };
     gray_scott2D(&cfg, rank, procs);
 
     MPI_Finalize();

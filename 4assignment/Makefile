@@ -11,3 +11,7 @@ sequential: gray_scott.c
 .PHONY: parallel
 parallel: par_gray_scott.c
 	$(MPICC) $(CFLAGS) -lmpi -o par_gray_scott par_gray_scott.c
+
+.PHONY: advanced
+advanced: advanced.c
+	$(MPICC) $(CFLAGS) -lmpi -o advanced advanced.c

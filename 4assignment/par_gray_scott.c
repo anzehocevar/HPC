@@ -96,22 +96,19 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
     MPI_Status stats[4];
 
     for (int t = 0; t < steps; t++) {
-        // exchange top row
-        if (rank > 0) {
-            MPI_Isend(&U[IDX(1, 0, N)], N, MPI_FLOAT, rank-1, 0, MPI_COMM_WORLD, &reqs[0]);
-            MPI_Irecv(&U[IDX(0, 0, N)], N, MPI_FLOAT, rank-1, 1, MPI_COMM_WORLD, &reqs[1]);
-            MPI_Isend(&V[IDX(1, 0, N)], N, MPI_FLOAT, rank-1, 2, MPI_COMM_WORLD, &reqs[2]);
-            MPI_Irecv(&V[IDX(0, 0, N)], N, MPI_FLOAT, rank-1, 3, MPI_COMM_WORLD, &reqs[3]);
-        }
-        if (rank < procs-1) {
-            MPI_Isend(&U[IDX(rows, 0, N)], N, MPI_FLOAT, rank+1, 1, MPI_COMM_WORLD, &reqs[1]);
-            MPI_Irecv(&U[IDX(rows+1, 0, N)], N, MPI_FLOAT, rank+1, 0, MPI_COMM_WORLD, &reqs[0]);
-            MPI_Isend(&V[IDX(rows, 0, N)], N, MPI_FLOAT, rank+1, 3, MPI_COMM_WORLD, &reqs[3]);
-            MPI_Irecv(&V[IDX(rows+1, 0, N)], N, MPI_FLOAT, rank+1, 2, MPI_COMM_WORLD, &reqs[2]);
-        }
-        int count = 0;
-        if (rank > 0 || rank < procs-1) count = 4;
-        if (count) MPI_Waitall(count, reqs, stats);
+        // Communication with upper neighbor
+        MPI_Isend(&U[IDX(1, 0, N)], N, MPI_FLOAT, (rank-1+procs)%procs, 0, MPI_COMM_WORLD, &reqs[0]);
+        MPI_Irecv(&U[IDX(0, 0, N)], N, MPI_FLOAT, (rank-1+procs)%procs, 1, MPI_COMM_WORLD, &reqs[1]);
+        MPI_Isend(&V[IDX(1, 0, N)], N, MPI_FLOAT, (rank-1+procs)%procs, 2, MPI_COMM_WORLD, &reqs[2]);
+        MPI_Irecv(&V[IDX(0, 0, N)], N, MPI_FLOAT, (rank-1+procs)%procs, 3, MPI_COMM_WORLD, &reqs[3]);
+        // Communication with lower neighbor
+        MPI_Isend(&U[IDX(rows, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 1, MPI_COMM_WORLD, &reqs[1]);
+        MPI_Irecv(&U[IDX(rows+1, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 0, MPI_COMM_WORLD, &reqs[0]);
+        MPI_Isend(&V[IDX(rows, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 3, MPI_COMM_WORLD, &reqs[3]);
+        MPI_Irecv(&V[IDX(rows+1, 0, N)], N, MPI_FLOAT, (rank+1+procs)%procs, 2, MPI_COMM_WORLD, &reqs[2]);
+
+        // Wait for all transfers to finish
+        MPI_Waitall(4, reqs, stats);
         MPI_Barrier(MPI_COMM_WORLD);
 
         // update interior

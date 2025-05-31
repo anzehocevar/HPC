@@ -196,7 +196,7 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
 
     // compute local avg
     double local_sum = 0;
-    for (int i = 0; i < N_local; i++) for (int j = 0; j < N_local; j++) local_sum += V_local[IDX(i, j, N)];
+    for (int i = 0; i < N_local; i++) for (int j = 0; j < N_local; j++) local_sum += V_local[IDX(i, j, N_local)];
     double global_sum;
     MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     if (rank == 0) printf("Mean V = %f, Time = %f sec\n", global_sum/(N*(double)N), (t1-t0));

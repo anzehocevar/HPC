@@ -61,7 +61,7 @@ double gray_scott2D(const gs_config *config, int rank, int procs) {
     float dt = config->dt, Du = config->du, Dv = config->dv, F = config->f, K = config->k;
 
     if (N % procs != 0) {
-        if (rank == 0) fprintf(stderr, "Error: grid size %%d not divisible by procs %%d\n", N, procs);
+        if (rank == 0) fprintf(stderr, "Error: grid size %d not divisible by procs %d\n", N, procs);
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
     int rows = N / procs;

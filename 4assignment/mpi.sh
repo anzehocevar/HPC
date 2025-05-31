@@ -2,10 +2,13 @@
 #SBATCH --job-name=gray_scott_mpi_test
 #SBATCH --output=slurm_logs/test_mpi_%j.out
 #SBATCH --error=slurm_logs/test_mpi_%j.err
-#SBATCH --ntasks=1                 # X MPI processes
+#SBATCH --nodes=1
+#SBATCH --ntasks=64
 #SBATCH --cpus-per-task=1
-#SBATCH --time=00:05:00
-
+#SBATCH --time=04:00:00
+#SBATCH --partition=gpu
+#SBATCH --nodelist=gwn02
+#SBATCH --exclusive
 
 module purge
 module load GCC
@@ -14,22 +17,21 @@ module load OpenMPI
 mkdir -p slurm_logs
 
 HOST=$(hostname)
-GRID_SIZE=256
-CORES=$SLURM_NTASKS
 
-# Recompile with correct grid size
-echo "Compiling with GRID_SIZE=$GRID_SIZE..."
+# Recompile
 # make clean
-# make GRID_SIZE=$GRID_SIZE mpi
-mpicc -O3 -fopenmp -DGRID_SIZE=256 -o par_gray_scott par_gray_scott.c -lm
+# TYPE="par_gray_scott"
+TYPE="advanced"
+make "$TYPE"
 
-# run and capture stdout
-OUTPUT=$(mpirun -np $CORES ./par_gray_scott)
+# echo "Hostname,Type,GridSize,Cores,Time" > timings_MPI.csv
+for grid_size in 256 512 1024 2048 4096; do
+    for ncpus in 64 16 4 1; do
+        output=$(mpirun -np $ncpus "./${TYPE}" "$grid_size")
+        mean=$(echo "$output" | grep "Mean V" | sed -E 's/.*Mean V = *([0-9]+\.[0-9]+).*/\1/')
+        time=$(echo "$output" | grep "Time =" | sed -E 's/.*Time = *([0-9]+\.[0-9]+) sec.*/\1/')
+        echo "$HOST,$TYPE,$grid_size,$ncpus,$time" >> timings_MPI.csv
+        sleep 1
+    done
+done
 
-
-# parse Mean V and Time
-MEAN=$(echo "$OUTPUT" | grep "Mean V" | sed -E 's/.*Mean V = *([0-9]+\.[0-9]+).*/\1/')
-TIME=$(echo "$OUTPUT" | grep "Time =" | sed -E 's/.*Time = *([0-9]+\.[0-9]+) sec.*/\1/')
-
-# write CSV
-echo "$HOST,MPI,$GRID_SIZE,$CORES,$MEAN,$TIME" | tee -a timings_MPI.csv
